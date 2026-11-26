@@ -70,6 +70,22 @@ PY
 then :; else echo "  ECHEC : smoke RL"; fail=1; fi
 
 echo
+echo "──────────────────────────────────────────────────────────────"
+echo "[4/4] Tests nzoyi-api (Phase 2 : outils, graphe, boucle E2E)"
+echo "──────────────────────────────────────────────────────────────"
+if [ -d "$ROOT/nzoyi-api/tests" ]; then
+  api_summary="$(cd "$ROOT/nzoyi-api" && python3 -m pytest tests/ -q 2>&1 | grep -E '[0-9]+ passed' | tail -1)"
+  if echo "$api_summary" | grep -qE 'passed' && ! echo "$api_summary" | grep -qE 'failed|error'; then
+    echo "  OK : $api_summary"
+  else
+    echo "  ECHEC : $api_summary"
+    fail=1
+  fi
+else
+  echo "  (sauté — nzoyi-api/tests absent)"
+fi
+
+echo
 if [ "$fail" -eq 0 ]; then
   echo "VERIFY: TOUT VERT [OK]"
 else

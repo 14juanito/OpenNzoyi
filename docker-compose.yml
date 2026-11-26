@@ -1,0 +1,59 @@
+# NZOYI — stack d'audit autonome.
+#   docker compose up -d
+# Services : PostgreSQL + microservice RL (nzoyi-core) + orchestrateur
+# (nzoyi-api) + UI (nzoyi-web).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nzoyi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nzoyi}
+      POSTGRES_DB: ${POSTGRES_DB:-nzoyi}
+    ports:
+      - "5432:5432"
+    volumes:
+      - nzoyi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nzoyi}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  core:
+    build:
+      context: ./nzoyi-core
+    environment:
+      NZOYI_DATABASE_URL: postgresql://${POSTGRES_USER:-nzoyi}:${POSTGRES_PASSWORD:-nzoyi}@db:5432/${POSTGRES_DB:-nzoyi}
+    ports:
+      - "8800:8800"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: nzoyi-api/Dockerfile
+    environment:
+      NZOYI_DATABASE_URL: postgresql://${POSTGRES_USER:-nzoyi}:${POSTGRES_PASSWORD:-nzoyi}@db:5432/${POSTGRES_DB:-nzoyi}
+      NZOYI_CORE_URL: http://core:8800
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      core:
+        condition: service_started
+
+  web:
+    build:
+      context: ./nzoyi-web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  nzoyi_pgdata:

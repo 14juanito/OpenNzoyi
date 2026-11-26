@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-nzoyi-bg text-nzoyi-ink font-sans antialiased;
+}
+
+/* Scrollbar discret */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-nzoyi-border rounded-full; }
+
+@layer components {
+  .card {
+    @apply bg-nzoyi-card rounded-2xl border border-nzoyi-border p-5 shadow-sm;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-nzoyi-orange
+           px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95
+           disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border
+           border-nzoyi-border bg-white px-4 py-2.5 text-sm font-medium
+           text-nzoyi-ink transition hover:bg-nzoyi-bg;
+  }
+  .input {
+    @apply w-full rounded-xl border border-nzoyi-border bg-white px-3.5 py-2.5
+           text-sm outline-none transition focus:border-nzoyi-orange
+           focus:ring-2 focus:ring-nzoyi-orange/20;
+  }
+  .label { @apply mb-1.5 block text-sm font-medium text-nzoyi-ink; }
+}

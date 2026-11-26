@@ -1,9 +1,8 @@
 # NZOYI — Architecture (en construction)
 
 > Statut : NZOYI passe de banc de mesure académique à **outil d'audit autonome**.
-> Ce document est rempli phase par phase. Seule la **Phase 1** est implémentée à
-> ce jour ; les sections suivantes décrivent la cible et seront complétées au fur
-> et à mesure.
+> Les **7 phases** de la refonte sont implémentées ; ce document décrit
+> l'architecture livrée, phase par phase.
 
 ## Vue d'ensemble (cible)
 
@@ -107,11 +106,54 @@ cd db && NZOYI_DATABASE_URL=postgresql://... python3 -m alembic upgrade head
 
 ---
 
-## Phases suivantes (non implémentées)
+## Phase 2 — Orchestrateur (nzoyi-api)
 
-- **Phase 2** : Planner + Dispatcher + 3 outils (nmap, nuclei, netexec), boucle
-  end-to-end.
-- **Phase 3** : catalogue d'outils P0/P1.
-- **Phase 4** : proxy MITM + gates (scope, interception, budget) + restore_lab.
-- **Phase 5** : UI Next.js (design system OpenZoyi).
-- **Phase 6** : outils P2 + packaging Docker Compose.
+Boucle `graph change → Planner → intent queue → Dispatcher → write-back`.
+
+- **Tool / ToolResult / ToolRegistry** (`tools/`) : contrat unique, wrappers
+  minces autour de binaires standard, `run_subprocess` async avec dégradation
+  `skipped` si binaire absent.
+- **Graphe unique** (`graph/`) : exploration (nodes goal/intent/fact/finding/
+  hint, edges spawns/derived_from/yields/proves) + assets (dédup). Remplace le
+  PTT — une seule mémoire.
+- **Planner** : stratégie (phase, cible), un intent à la fois.
+- **Dispatcher** : scope → interception → budget → `rl.next_action` →
+  governor.clamp → `tool.run` → evidence → reward → `rl.update` → write-back.
+  Le RL choisit outil + timing + delay + frag ; le Planner décide la phase.
+- **rl_client** : HTTP vers `nzoyi-core` (`NZOYI_CORE_URL`) ou in-process.
+- **engine + main.py** (CLI) + **server.py** (API HTTP + SSE).
+
+## Phase 3 — Catalogue d'outils P0/P1
+
+15 wrappers : recon (nmap, rustscan, httpx, subfinder), vuln (nuclei, ffuf,
+sqlmap, nikto), ad_enum (netexec, impacket, bloodhound, sharphound), linux
+(linpeas, linux-exploit-suggester), lateral (chisel). `knowledge/
+tool_signatures.py` : prior de détection pour amorcer le RL.
+
+## Phase 4 — Garde-fous & preuves
+
+`gates/` : scope, interception (règles string/regex/argv_prefix, modes
+autonome/semi), budget (wrap-up), untrusted boundary, lifecycle (kill +
+rollback). `agents/noise_governor.py` : borne le débit du RL (token bucket,
+jitter, backoff). `evidence/` : capture + addon mitmproxy (port 8788).
+`scripts/restore_lab.sh` : snapshots libvirt. Voir [SECURITY.md](SECURITY.md).
+
+## Phase 5 — UI (nzoyi-web)
+
+Next.js 15 (App Router) + Tailwind, palette OpenZoyi (orange/noir/blanc).
+Dashboard, `/tasks/new`, `/tasks/[id]` (live SSE), `/tasks/[id]/findings`.
+Backend : endpoints `/api/*` + flux SSE `/api/tasks/{id}/stream`.
+
+## Phase 6 — Outils P2 & packaging
+
+Wrappers post/lateral/evasion (certipy, evil-winrm, rubeus, mimikatz, winpeas,
+sdn-toolkit, scapy_evasion) — destructifs gatés. `docker-compose.yml` :
+db (postgres:16) + core + api + web ; migrations appliquées au démarrage.
+
+## Vérification globale
+
+```
+bash scripts/verify.sh        # 72 tests d'origine + gate LLM + smoke RL + 45 tests nzoyi-api
+docker compose config         # stack valide
+cd nzoyi-web && npm run build  # UI compile + typecheck
+```
