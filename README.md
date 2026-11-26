@@ -1,32 +1,40 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00ff41,100:0d1117&height=200&section=header&text=OpenZoyi&fontSize=64&fontAlignY=38&fontColor=39FF14&animation=fadeIn&desc=Multi-Agent%20Adaptive%20Intrusion%20Framework&descAlignY=58&descSize=17&descColor=39FF14" alt="OpenZoyi banner" width="100%">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:F59E0B,100:0d1117&height=200&section=header&text=OpenZoyi&fontSize=64&fontAlignY=38&fontColor=F59E0B&animation=fadeIn&desc=Multi-Agent%20Adaptive%20Intrusion%20Framework&descAlignY=58&descSize=17&descColor=F59E0B" alt="OpenZoyi banner" width="100%">
 </p>
 
 <p align="center">
-  <img src="assets/openzoyi-logo.png" alt="OpenZoyi — Multi-agent automated intrusion system" width="200">
+  <img src="assets/openzoyi-wordmark.png" alt="OpenZoyi — Multi-agent automated intrusion system" width="440">
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=900&color=39FF14&center=true&vCenter=true&width=700&lines=%5B*%5D+Initialisation+du+Pentest+Tree+(PTT)...;%5B*%5D+Chargement+de+7+agents+sp%C3%A9cialis%C3%A9s...;%5B*%5D+Panel+LLM+%E2%80%94+Anthropic+%2F+OpenRouter+%2F+Ollama...;%5B*%5D+Evasion+Agent+%E2%80%94+Q-Learning+pur+(H1%2FH3)...;%5B*%5D+Analyse+des+alertes+Suricata+(eve.json)...;%5B%2B%5D+Syst%C3%A8me+multi-agents+op%C3%A9rationnel." alt="Typing SVG">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=900&color=F59E0B&center=true&vCenter=true&width=700&lines=%5B*%5D+Initialisation+du+Pentest+Tree+(PTT)...;%5B*%5D+Chargement+de+7+agents+sp%C3%A9cialis%C3%A9s...;%5B*%5D+Panel+LLM+%E2%80%94+Anthropic+%2F+OpenRouter+%2F+Ollama...;%5B*%5D+Evasion+Agent+%E2%80%94+Q-Learning+pur+(H1%2FH3)...;%5B*%5D+Analyse+des+alertes+Suricata+(eve.json)...;%5B%2B%5D+Syst%C3%A8me+multi-agents+op%C3%A9rationnel." alt="Typing SVG">
 </p>
 
 <p align="center">
-  <strong>Système multi-agents d'intrusion automatisée avec évasion adaptative des IDS et panel LLM interchangeable</strong>
+  <strong>Outil d'audit de sécurité autonome — système multi-agents à évasion adaptative des IDS/SDN, moteur d'évasion par renforcement (RL) et panel LLM interchangeable</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/version-0.1.0-39FF14?style=flat-square&labelColor=0d1117" alt="Version"></a>
-  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/python-3.11+-39FF14?style=flat-square&logo=python&logoColor=39FF14&labelColor=0d1117" alt="Python"></a>
-  <a href="docs/LAB_SETUP.md"><img src="https://img.shields.io/badge/lab-isol%C3%A9-39FF14?style=flat-square&labelColor=0d1117" alt="Lab isolé"></a>
-  <a href="#panel-llm-multi-fournisseur"><img src="https://img.shields.io/badge/LLM-Anthropic%20%7C%20OpenRouter%20%7C%20Ollama-39FF14?style=flat-square&labelColor=0d1117" alt="Panel LLM"></a>
-  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/licence-recherche-39FF14?style=flat-square&labelColor=0d1117" alt="Licence"></a>
+  <img src="https://img.shields.io/badge/statut-outil%20d'audit%20autonome-F59E0B?style=for-the-badge&labelColor=1F2937" alt="Statut">
+  <img src="https://img.shields.io/badge/refonte-Phase%201%2F7%20livr%C3%A9e-10B981?style=for-the-badge&labelColor=1F2937" alt="Phase 1">
+  <img src="https://img.shields.io/badge/tests-72%2F72-10B981?style=for-the-badge&labelColor=1F2937" alt="Tests">
+</p>
+
+> **En refonte** — NZOYI passe de banc de mesure académique à **outil d'audit autonome** (cibles Ubuntu/Windows Server, contournement IDS + SDN, findings vérifiés avec preuves capturées). Le moteur d'évasion reste **100 % Q-Learning, jamais de LLM**. La **Phase 1** (microservice RL `nzoyi-core` + schéma PostgreSQL) est livrée ; voir [feuille de route](#feuille-de-route-de-la-refonte).
+
+<p align="center">
+  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/version-0.1.0-F59E0B?style=flat-square&labelColor=0d1117" alt="Version"></a>
+  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/python-3.11+-F59E0B?style=flat-square&logo=python&logoColor=F59E0B&labelColor=0d1117" alt="Python"></a>
+  <a href="docs/LAB_SETUP.md"><img src="https://img.shields.io/badge/lab-isol%C3%A9-F59E0B?style=flat-square&labelColor=0d1117" alt="Lab isolé"></a>
+  <a href="#panel-llm-multi-fournisseur"><img src="https://img.shields.io/badge/LLM-Anthropic%20%7C%20OpenRouter%20%7C%20Ollama-F59E0B?style=flat-square&labelColor=0d1117" alt="Panel LLM"></a>
+  <a href="https://github.com/14juanito/Projet-Nzoyi"><img src="https://img.shields.io/badge/licence-recherche-F59E0B?style=flat-square&labelColor=0d1117" alt="Licence"></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/14juanito/Projet-Nzoyi?style=flat-square&color=39FF14&labelColor=0d1117" alt="Stars">
-  <img src="https://img.shields.io/github/forks/14juanito/Projet-Nzoyi?style=flat-square&color=39FF14&labelColor=0d1117" alt="Forks">
-  <img src="https://img.shields.io/github/last-commit/14juanito/Projet-Nzoyi?style=flat-square&color=39FF14&labelColor=0d1117" alt="Last commit">
-  <img src="https://img.shields.io/github/issues/14juanito/Projet-Nzoyi?style=flat-square&color=39FF14&labelColor=0d1117" alt="Issues">
+  <img src="https://img.shields.io/github/stars/14juanito/Projet-Nzoyi?style=flat-square&color=F59E0B&labelColor=0d1117" alt="Stars">
+  <img src="https://img.shields.io/github/forks/14juanito/Projet-Nzoyi?style=flat-square&color=F59E0B&labelColor=0d1117" alt="Forks">
+  <img src="https://img.shields.io/github/last-commit/14juanito/Projet-Nzoyi?style=flat-square&color=F59E0B&labelColor=0d1117" alt="Last commit">
+  <img src="https://img.shields.io/github/issues/14juanito/Projet-Nzoyi?style=flat-square&color=F59E0B&labelColor=0d1117" alt="Issues">
 </p>
 
 <p align="center">
@@ -57,7 +65,7 @@ Contrairement aux outils de pentest classiques, NZOYI combine :
 ## Aperçu terminal
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=14&duration=1600&pause=400&color=00FF41&center=true&vCenter=true&width=600&lines=nmap+-sS+-T2+--max-rate+10+192.168.100.11;scanning...+2%25...+37%25...+81%25...+100%25;3+open+ports+%7C+0+alertes+critiques" alt="scan animation">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=14&duration=1600&pause=400&color=F59E0B&center=true&vCenter=true&width=600&lines=nmap+-sS+-T2+--max-rate+10+192.168.100.11;scanning...+2%25...+37%25...+81%25...+100%25;3+open+ports+%7C+0+alertes+critiques" alt="scan animation">
 </p>
 
 ```ansi
@@ -179,7 +187,7 @@ tester **H2 — Transférabilité** de l'évasion Q-Learning contre plusieurs
 détecteurs. Détails : [`service/README.md`](service/README.md).
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00ff41,100:0d1117&height=60&section=header" width="100%" alt="divider">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:F59E0B,100:0d1117&height=60&section=header" width="100%" alt="divider">
 </p>
 
 ## Panel LLM multi-fournisseur
@@ -230,6 +238,41 @@ python main.py --target 192.168.100.11 --no-llm
 ```
 
 Détails complets des variables d'environnement : [`.env.example`](.env.example).
+
+---
+
+## Interface web (`nzoyi-web`)
+
+> **Prévue en Phase 5 — non encore implémentée.** Le backend passe d'abord
+> (microservice RL, orchestrateur, outils, garde-fous), l'UI ensuite.
+
+L'interface sera une application **Next.js 15 + TypeScript + Tailwind + shadcn/ui**
+(React Flow pour les graphes, flux **SSE** pour le live). Elle reprendra la charte
+du logo **OpenZoyi** — abeille orange sur fond clair.
+
+<p align="center">
+  <img src="assets/ui/dashboard-model.jpg" alt="Modèle de référence du futur dashboard nzoyi-web" width="760">
+  <br>
+  <sub><i>Modèle de référence (design externe) dont s'inspirera le dashboard — ce n'est pas une capture de NZOYI.</i></sub>
+</p>
+
+**Palette (charte OpenZoyi) :**
+
+| Rôle | Couleur | Hex |
+|------|---------|-----|
+| Accent principal (abeille) | 🟧 Orange | `#F59E0B` |
+| Texte / structure | ⬛ Noir profond | `#1F2937` |
+| Fond principal | ⬜ Gris très clair | `#F8F9FA` |
+| Cartes | ⬜ Blanc | `#FFFFFF` |
+| Succès | 🟩 Vert | `#10B981` |
+| Alerte | 🟥 Rouge | `#EF4444` |
+
+Typographie : **Inter** (UI) + **JetBrains Mono** (logs, sorties d'outils). Mode
+sombre par défaut, contrastes AA.
+
+**Écrans prioritaires (P0) :** `/tasks/new` (création de tâche) ·
+`/tasks/[id]` (vue live SSE) · `/tasks/[id]/findings` (findings + preuves + export).
+Puis P1 : graphe d'exploration (React Flow), couverture d'actifs, trafic capturé + replay.
 
 ---
 
@@ -306,7 +349,24 @@ python main.py --target 192.168.100.11 --profile stealth --eve-log /var/log/suri
 ```
 Projet-Nzoyi/
 ├── assets/
-│   └── openzoyi-logo.png       # Logo du projet
+│   ├── openzoyi-wordmark.png   # Logo texte (abeille + "openzoyi")
+│   ├── openzoyi-bee.png        # Icône abeille (favicon / UI)
+│   ├── openzoyi-logo.png       # Logo historique
+│   └── ui/
+│       └── dashboard-model.jpg # Modèle de référence du dashboard (Phase 5)
+├── nzoyi-core/                 # ★ Phase 1 — microservice RL (FastAPI, sans LLM)
+│   ├── evasion/
+│   │   ├── q_learner.py        # copie SHA256-identique de nzoyi/rl/qlearning.py
+│   │   ├── state.py            # espace d'état explicite (1512 états) + hash
+│   │   ├── action.py           # espace d'action par phase {tool,timing,delay,frag}
+│   │   └── policy_store.py     # Q-tables PostgreSQL (+ fallback mémoire)
+│   ├── api.py                  # /evasion/next_action,/update,/policy,/reset,/health
+│   └── Dockerfile
+├── db/                         # ★ Phase 1 — migrations Alembic (PostgreSQL)
+│   ├── alembic.ini
+│   └── migrations/versions/    # 0001_initial_schema.py (13 tables)
+├── scripts/
+│   └── verify.sh               # CI locale (72 tests + gate LLM + smoke RL)
 ├── benchmark/                  # Benchmark IDS multi-modèles (UNSW-NB15)
 │   ├── data.py                 # Chargement split officiel, retrait fuites
 │   ├── preprocessing.py        # ColumnTransformer partagé (fit train only)
@@ -338,7 +398,36 @@ Projet-Nzoyi/
 
 ---
 
+## Feuille de route de la refonte
+
+NZOYI devient un outil d'audit autonome en 7 phases. Le moteur Q-Learning est
+déplacé tel quel ; les 72 tests d'origine restent verts à chaque étape.
+
+| Phase | Contenu | Statut |
+|-------|---------|--------|
+| **1** | Extraction du RL → microservice `nzoyi-core` + schéma PostgreSQL (Alembic, 13 tables) | ✅ **Livrée** |
+| **2** | `Planner` + `Dispatcher` + 3 outils (nmap, nuclei, netexec), boucle end-to-end | ⏳ À venir |
+| **3** | Catalogue d'outils P0/P1 (recon, vuln, AD, Linux priv-esc) | ⏳ |
+| **4** | Proxy MITM (preuves) + garde-fous (scope / interception / budget) + `restore_lab.sh` | ⏳ |
+| **5** | UI `nzoyi-web` (Next.js, design system OpenZoyi) | ⏳ |
+| **6** | Outils P2 (Certipy, evil-winrm, Rubeus, SDN-toolkit, scapy) + packaging Docker Compose | ⏳ |
+| **7** | `docker compose up -d` sur machine vierge, documentation complète | ⏳ |
+
+Garde-fous non négociables, vérifiés par `scripts/verify.sh` :
+**(1)** 72/72 tests · **(2)** zéro import LLM dans `nzoyi-core/evasion/` ·
+**(3)** toute action offensive passe par scope gate + budget · **(4)** toute
+preuve capturée (requête + réponse) · **(5)** lab restaurable.
+
+Détail des décisions d'architecture : [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+---
+
 ## Hypothèses de recherche
+
+> Depuis le passage au statut d'outil, ces hypothèses ne sont plus des critères
+> de validation obligatoires : le RL doit être **utile** (trouver, exploiter,
+> rester discret), pas **prouvable**. Elles restent l'héritage scientifique du
+> projet et cadrent toujours le design du moteur d'évasion.
 
 | Hypothèse | Énoncé |
 |-----------|--------|
@@ -347,7 +436,7 @@ Projet-Nzoyi/
 | **H3 — Limite défensive** | Il existe un seuil de rupture où l'évasion rend l'attaque aussi lente qu'un pentest manuel |
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00ff41,100:0d1117&height=60&section=header" width="100%" alt="divider">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:F59E0B,100:0d1117&height=60&section=header" width="100%" alt="divider">
 </p>
 
 ## Journal des évolutions
@@ -385,5 +474,5 @@ Faculté des Sciences Informatiques — Université Protestante au Congo
 </p>
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00ff41,100:0d1117&height=120&section=footer" alt="footer" width="100%">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:F59E0B,100:0d1117&height=120&section=footer" alt="footer" width="100%">
 </p>
