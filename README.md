@@ -14,6 +14,12 @@
 </p>
 
 <p align="center">
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/contributions-welcome-F59E0B?style=flat-square&labelColor=1F2937" alt="Contributions welcome"></a>
+  <a href="https://github.com/14juanito/OpenNzoyi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/14juanito/OpenNzoyi/good%20first%20issue?style=flat-square&labelColor=1F2937&color=10B981" alt="good first issues"></a>
+  <a href="https://github.com/14juanito/OpenNzoyi/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22"><img src="https://img.shields.io/github/issues/14juanito/OpenNzoyi/help%20wanted?style=flat-square&labelColor=1F2937&color=EAB308" alt="help wanted"></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Python-3.13-F59E0B?style=flat-square&labelColor=1F2937&logo=python&logoColor=F59E0B">
   <img src="https://img.shields.io/badge/Next.js-15-F59E0B?style=flat-square&labelColor=1F2937&logo=nextdotjs&logoColor=F59E0B">
   <img src="https://img.shields.io/badge/FastAPI-0.11x-F59E0B?style=flat-square&labelColor=1F2937&logo=fastapi&logoColor=F59E0B">
