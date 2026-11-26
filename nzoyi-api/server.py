@@ -26,6 +26,8 @@ from gates.approvals import GLOBAL_APPROVALS
 from knowledge.attack import coverage as attack_coverage
 from knowledge.tool_signatures import prior_detection
 from agents.killchain import reconstruct as reconstruct_killchain
+from gates.rules_store import GLOBAL_RULES
+from security.secrets import GLOBAL_SECRETS, SecretError
 
 _SEV = ["critical", "high", "medium", "low", "info"]
 
@@ -143,7 +145,7 @@ def list_tasks() -> list[dict[str, Any]]:
 
 
 @app.get("/api/findings")
-def all_findings() -> dict[str, Any]:
+def all_findings(dedup: bool = False) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for tid, result in MANAGER.results.items():
         tname = MANAGER.tasks.get(tid, {}).get("name", tid)
@@ -153,12 +155,78 @@ def all_findings() -> dict[str, Any]:
     items.sort(key=lambda f: order.get(f["severity"], 99))
     counts = _sev_counts(items)
     pending = sum(1 for f in items if f.get("status") in (None, "unverified", "pending"))
+
+    out_items = items
+    if dedup:
+        groups: dict[tuple, dict[str, Any]] = {}
+        for f in items:
+            key = (f.get("title"), f.get("severity"))
+            g = groups.get(key)
+            if g is None:
+                groups[key] = {**f, "instances": 1, "assets": [f.get("matched_at")]}
+            else:
+                g["instances"] += 1
+                if f.get("matched_at") not in g["assets"]:
+                    g["assets"].append(f.get("matched_at"))
+        out_items = sorted(groups.values(),
+                           key=lambda f: order.get(f["severity"], 99))
+
     return {
         "total": len(items),
+        "unique": len(out_items) if dedup else len(items),
         "pending": pending,
         "by_severity": counts,
-        "findings": items,
+        "findings": out_items,
     }
+
+
+# ── secret manager (AES-256-GCM) ─────────────────────────────────────────
+class SecretIn(BaseModel):
+    name: str
+    value: str
+
+
+@app.get("/api/secrets")
+def list_secrets() -> list[dict[str, str]]:
+    return GLOBAL_SECRETS.list()
+
+
+@app.post("/api/secrets")
+def set_secret(s: SecretIn) -> dict[str, str]:
+    try:
+        return GLOBAL_SECRETS.set(s.name, s.value)
+    except SecretError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.delete("/api/secrets/{name}")
+def delete_secret(name: str) -> dict[str, Any]:
+    return {"name": name, "deleted": GLOBAL_SECRETS.delete(name)}
+
+
+# ── interception rules editor ────────────────────────────────────────────
+class RuleIn(BaseModel):
+    rule_type: str
+    pattern: Any
+    action: str
+
+
+@app.get("/api/interception-rules")
+def list_rules() -> list[dict[str, Any]]:
+    return GLOBAL_RULES.list()
+
+
+@app.post("/api/interception-rules")
+def add_rule(r: RuleIn) -> dict[str, Any]:
+    try:
+        return GLOBAL_RULES.add(r.rule_type, r.pattern, r.action)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.delete("/api/interception-rules/{rid}")
+def delete_rule(rid: int) -> dict[str, Any]:
+    return {"id": rid, "deleted": GLOBAL_RULES.delete(rid)}
 
 
 def _tool_calls(tid: str) -> list[dict[str, Any]]:

@@ -11,9 +11,10 @@ export default function FindingsPage() {
   const [agg, setAgg] = useState<FindingsAgg | null>(null);
   const [q, setQ] = useState("");
   const [sev, setSev] = useState<Severity | "all">("all");
+  const [dedup, setDedup] = useState(false);
 
-  const load = () => api.allFindings().then(setAgg).catch(() => setAgg({ total: 0, pending: 0, by_severity: {} as any, findings: [] }));
-  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, []);
+  const load = () => api.allFindings(dedup).then(setAgg).catch(() => setAgg({ total: 0, pending: 0, by_severity: {} as any, findings: [] }));
+  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, [dedup]);
 
   const findings = useMemo(() => {
     const items = agg?.findings ?? [];
@@ -63,6 +64,11 @@ export default function FindingsPage() {
               </button>
             ))}
           </div>
+          <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm text-nzoyi-slate">
+            <input type="checkbox" checked={dedup} onChange={(e) => setDedup(e.target.checked)}
+                   className="accent-nzoyi-orange" />
+            Dédupliquer
+          </label>
         </div>
 
         <div className="overflow-x-auto">
@@ -83,11 +89,16 @@ export default function FindingsPage() {
                   Aucun finding pour le moment.
                 </td></tr>
               )}
-              {findings.map((f: Finding, i) => (
+              {findings.map((f, i) => (
                 <tr key={f.id} className={`border-b border-nzoyi-border/60 ${i % 2 ? "bg-nzoyi-bg/40" : ""}`}>
                   <td className="py-3"><SeverityBadge severity={f.severity} /></td>
                   <td className="py-3 font-medium">
                     {f.title}
+                    {dedup && f.instances && f.instances > 1 && (
+                      <span className="ml-2 rounded-full bg-nzoyi-ink/10 px-2 py-0.5 text-[11px] font-semibold text-nzoyi-slate">
+                        ×{f.instances}
+                      </span>
+                    )}
                     {f.attack && f.attack.length > 0 && (
                       <span className="ml-2 inline-flex gap-1 align-middle">
                         {f.attack.map((a) => (

@@ -26,6 +26,7 @@ from agents.planner import Intent
 from gates.approvals import GLOBAL_APPROVALS
 from gates.budget import Budget
 from gates.interception_gate import ApprovalRule, InterceptionGate
+from gates.rules_store import GLOBAL_RULES
 from gates.scope_gate import ScopeGate
 from graph.assets import AssetGraph
 from graph.exploration import ExplorationGraph
@@ -86,7 +87,8 @@ class Dispatcher:
         self.budget = budget
         self.evidence = evidence_store
         self.governor = governor or NoiseGovernor(profile)
-        self.interception = InterceptionGate(approval_rules, mode=interception_mode)
+        rules = approval_rules if approval_rules is not None else GLOBAL_RULES.as_approval_rules()
+        self.interception = InterceptionGate(rules, mode=interception_mode)
         self.scope_gate = ScopeGate(
             scope, known_assets=self.assets.values, root_target=root_target
         )

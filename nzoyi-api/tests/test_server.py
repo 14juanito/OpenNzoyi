@@ -110,3 +110,31 @@ def test_analytics_endpoints():
     assert "reward_series" in tel and "stealth_score" in tel and 0 <= tel["stealth_score"] <= 1
     gt = client.get("/api/telemetry").json()
     assert "avg_stealth_score" in gt and "per_task" in gt
+
+
+def test_secret_manager_roundtrip_and_api():
+    from security.secrets import GLOBAL_SECRETS
+    meta = client.post("/api/secrets", json={"name": "ANTHROPIC_API_KEY", "value": "sk-xyz"}).json()
+    assert meta["name"] == "ANTHROPIC_API_KEY"
+    names = [s["name"] for s in client.get("/api/secrets").json()]
+    assert "ANTHROPIC_API_KEY" in names
+    # API never exposes the value; the manager decrypts it correctly
+    assert GLOBAL_SECRETS.get("ANTHROPIC_API_KEY") == "sk-xyz"
+    assert client.delete("/api/secrets/ANTHROPIC_API_KEY").json()["deleted"] is True
+
+
+def test_interception_rules_crud_and_argv_split():
+    r = client.post("/api/interception-rules",
+                    json={"rule_type": "argv_prefix", "pattern": "impacket-secretsdump x",
+                          "action": "deny"}).json()
+    assert r["pattern"] == ["impacket-secretsdump", "x"]  # split into tokens
+    assert any(x["id"] == r["id"] for x in client.get("/api/interception-rules").json())
+    assert client.delete(f"/api/interception-rules/{r['id']}").json()["deleted"] is True
+    # invalid type rejected
+    assert client.post("/api/interception-rules",
+                       json={"rule_type": "bad", "pattern": "x", "action": "deny"}).status_code == 422
+
+
+def test_findings_dedup():
+    agg = client.get("/api/findings", params={"dedup": "true"}).json()
+    assert "unique" in agg and "findings" in agg

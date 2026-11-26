@@ -36,10 +36,14 @@ export type Finding = {
 
 export type FindingsAgg = {
   total: number;
+  unique?: number;
   pending: number;
   by_severity: Record<Severity, number>;
-  findings: Finding[];
+  findings: (Finding & { instances?: number; assets?: string[] })[];
 };
+
+export type Secret = { name: string; created_at: string };
+export type InterceptionRule = { id: number; rule_type: string; pattern: any; action: string };
 
 export type Flow = {
   id: string;
@@ -110,7 +114,24 @@ export const api = {
     fetch(`${API_URL}/api/tasks/${id}`, { method: "DELETE" }).then(j),
   taskFindings: (id: string) =>
     fetch(`${API_URL}/api/tasks/${id}/findings`).then(j<Finding[]>),
-  allFindings: () => fetch(`${API_URL}/api/findings`).then(j<FindingsAgg>),
+  allFindings: (dedup = false) =>
+    fetch(`${API_URL}/api/findings${dedup ? "?dedup=true" : ""}`).then(j<FindingsAgg>),
+  listSecrets: () => fetch(`${API_URL}/api/secrets`).then(j<Secret[]>),
+  setSecret: (name: string, value: string) =>
+    fetch(`${API_URL}/api/secrets`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, value }),
+    }).then(j<Secret>),
+  deleteSecret: (name: string) =>
+    fetch(`${API_URL}/api/secrets/${encodeURIComponent(name)}`, { method: "DELETE" }).then(j),
+  listRules: () => fetch(`${API_URL}/api/interception-rules`).then(j<InterceptionRule[]>),
+  addRule: (rule_type: string, pattern: string, action: string) =>
+    fetch(`${API_URL}/api/interception-rules`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rule_type, pattern, action }),
+    }).then(j<InterceptionRule>),
+  deleteRule: (id: number) =>
+    fetch(`${API_URL}/api/interception-rules/${id}`, { method: "DELETE" }).then(j),
   traffic: (taskId?: string) =>
     fetch(`${API_URL}/api/traffic${taskId ? `?task_id=${taskId}` : ""}`).then(
       j<{ count: number; flows: Flow[]; proxy_port: number }>
