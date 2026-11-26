@@ -2,7 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { api, Task, Finding, GraphData } from "@/lib/api";
+import { api, Task, Finding, GraphData, KillChain } from "@/lib/api";
 import { StatusDot, SeverityBadge } from "@/components/ui";
 
 const TaskGraph = dynamic(() => import("@/components/task-graph").then((m) => m.TaskGraph), {
@@ -11,7 +11,7 @@ const TaskGraph = dynamic(() => import("@/components/task-graph").then((m) => m.
 });
 
 type Ev = { type: string; ts?: string; [k: string]: any };
-const TABS = ["Sessions", "Graphe", "Findings", "Report"] as const;
+const TABS = ["Sessions", "Graphe", "Kill chain", "Findings", "Report"] as const;
 
 export default function TaskDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -105,6 +105,7 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
       )}
 
       {tab === "Graphe" && <GraphTab id={id} />}
+      {tab === "Kill chain" && <KillChainTab id={id} />}
       {tab === "Findings" && <FindingsTab id={id} />}
       {tab === "Report" && <ReportTab id={id} />}
     </div>
@@ -119,6 +120,42 @@ function GraphTab({ id }: { id: string }) {
     <div className="card">
       <p className="mb-3 text-sm font-semibold">Graphe d'exploration</p>
       <TaskGraph data={data} />
+    </div>
+  );
+}
+
+function KillChainTab({ id }: { id: string }) {
+  const [kc, setKc] = useState<KillChain | null>(null);
+  useEffect(() => { api.killchain(id).then(setKc).catch(() => {}); }, [id]);
+  if (!kc) return <div className="card text-sm text-nzoyi-slate">Chargement…</div>;
+  return (
+    <div className="card">
+      <div className="mb-4 rounded-lg bg-nzoyi-bg px-3 py-2 font-mono text-xs text-nzoyi-ink">
+        {kc.summary}
+      </div>
+      {kc.steps.length === 0 ? (
+        <p className="py-6 text-center text-sm text-nzoyi-slate">Chaîne vide — aucun intent exécuté.</p>
+      ) : (
+        <ol className="relative ml-3 border-l-2 border-nzoyi-border">
+          {kc.steps.map((s) => (
+            <li key={s.order} className="mb-5 ml-5">
+              <span className="absolute -left-[11px] flex h-5 w-5 items-center justify-center rounded-full bg-nzoyi-orange text-[10px] font-bold text-white">
+                {s.order}
+              </span>
+              <p className="font-medium">
+                <span className="rounded bg-nzoyi-ink/5 px-1.5 py-0.5 font-mono text-xs">{s.phase}</span>{" "}
+                {s.action}
+              </p>
+              <p className="text-sm text-nzoyi-slate">→ {s.result}</p>
+              {s.findings.map((f, i) => (
+                <span key={i} className="mr-1 mt-1 inline-block rounded bg-nzoyi-danger/10 px-1.5 py-0.5 text-[11px] text-nzoyi-danger">
+                  {f.severity} · {f.title}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

@@ -60,6 +60,31 @@ export type Conversation = {
   created_at: string; messages: ChatMsg[];
 };
 
+export type AttackCoverage = {
+  tactics: string[];
+  by_tactic: Record<string, { id: string; name: string; count: number }[]>;
+  techniques_total: number;
+  techniques_exercised: number;
+};
+
+export type KillChain = {
+  steps: { order: number; phase: string; target: string; action: string;
+           result: string; findings: { title: string; severity: string }[] }[];
+  summary: string; length: number;
+};
+
+export type Telemetry = {
+  task_id: string;
+  reward_series: { step: number; phase: string; tool: string; reward: number; ran: boolean }[];
+  detection: { tool: string; predicted: number; observed_alerts: number }[];
+  total_alerts: number; stealth_score: number; epsilon: number; steps: number;
+};
+
+export type GlobalTelemetry = {
+  tasks: number; avg_stealth_score: number | null;
+  total_steps: number; total_alerts: number; per_task: Telemetry[];
+};
+
 export type ApprovalRecord = {
   seq: number; task_id: string; task_name: string; tool: string; source: string;
   matched_rule: string; decision_source: string; arguments: Record<string, any>;
@@ -91,6 +116,13 @@ export const api = {
       j<{ count: number; flows: Flow[]; proxy_port: number }>
     ),
   graph: (id: string) => fetch(`${API_URL}/api/tasks/${id}/graph`).then(j<GraphData>),
+  attackCoverage: (taskId?: string) =>
+    fetch(`${API_URL}/api/attack-coverage${taskId ? `?task_id=${taskId}` : ""}`).then(j<AttackCoverage>),
+  killchain: (id: string) =>
+    fetch(`${API_URL}/api/tasks/${id}/killchain`).then(j<KillChain>),
+  taskTelemetry: (id: string) =>
+    fetch(`${API_URL}/api/tasks/${id}/telemetry`).then(j<Telemetry>),
+  telemetry: () => fetch(`${API_URL}/api/telemetry`).then(j<GlobalTelemetry>),
   sessions: (id: string) =>
     fetch(`${API_URL}/api/tasks/${id}/sessions`).then(
       j<{ events: any[]; workers: any[] }>

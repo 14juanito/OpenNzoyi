@@ -95,3 +95,18 @@ def test_attack_techniques_present():
     from knowledge.tool_signatures import attack_techniques
     assert attack_techniques("mimikatz")[0]["id"] == "T1003.001"
     assert attack_techniques("nmap")[0]["id"] == "T1046"
+
+
+def test_analytics_endpoints():
+    task = MANAGER.create(TaskCreate(
+        name="ana", target="192.168.100.11",
+        scope={"cidrs": ["192.168.100.0/24"], "domains": []}, profile="quiet"))
+    asyncio.run(MANAGER.run(task["id"]))
+    cov = client.get("/api/attack-coverage").json()
+    assert "by_tactic" in cov and "techniques_total" in cov
+    kc = client.get(f"/api/tasks/{task['id']}/killchain").json()
+    assert "steps" in kc and "summary" in kc
+    tel = client.get(f"/api/tasks/{task['id']}/telemetry").json()
+    assert "reward_series" in tel and "stealth_score" in tel and 0 <= tel["stealth_score"] <= 1
+    gt = client.get("/api/telemetry").json()
+    assert "avg_stealth_score" in gt and "per_task" in gt

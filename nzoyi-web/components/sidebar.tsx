@@ -10,6 +10,8 @@ const functions: Item[] = [
   { href: "/chat", label: "Chat", icon: "chat" },
   { href: "/tasks", label: "Tâches", icon: "list" },
   { href: "/findings", label: "Findings", icon: "bug" },
+  { href: "/attack", label: "ATT&CK", icon: "target" },
+  { href: "/telemetry", label: "Télémétrie", icon: "pulse" },
   { href: "/traffic", label: "Trafic", icon: "activity" },
   { href: "/assets", label: "Actifs", icon: "share" },
 ];
@@ -25,6 +27,8 @@ const paths: Record<string, string> = {
   list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
   bug: "M8 2l1.5 1.5M16 2l-1.5 1.5M12 20v-9M5 13H2m20 0h-3M6 9a6 6 0 0112 0v4a6 6 0 01-12 0zM5 7L3 5m16 2l2-2M5 19l-2 2m16-2l2 2",
   activity: "M22 12h-4l-3 9L9 3l-3 9H2",
+  target: "M12 12m-9 0a9 9 0 1018 0 9 9 0 10-18 0M12 12m-5 0a5 5 0 1010 0 5 5 0 10-10 0M12 12m-1 0a1 1 0 102 0 1 1 0 10-2 0",
+  pulse: "M3 12h4l2-7 4 14 2-7h6",
   share: "M18 8a3 3 0 10-2.83-4M6 15a3 3 0 100 6 3 3 0 000-6zm12 0a3 3 0 100 6 3 3 0 000-6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
   shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
   settings: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.63.67 1.09 1.31 1.09H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z",

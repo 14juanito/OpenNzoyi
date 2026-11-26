@@ -9,6 +9,7 @@ repository replaces the in-memory store in a later iteration; the HTTP contract
 from __future__ import annotations
 
 import asyncio
+import os
 import json
 import uuid
 from datetime import datetime, timezone
@@ -22,6 +23,9 @@ from pydantic import BaseModel, Field
 from engine import Engine, EngineResult
 from evidence.capture import GLOBAL_STORE
 from gates.approvals import GLOBAL_APPROVALS
+from knowledge.attack import coverage as attack_coverage
+from knowledge.tool_signatures import prior_detection
+from agents.killchain import reconstruct as reconstruct_killchain
 
 _SEV = ["critical", "high", "medium", "low", "info"]
 
@@ -154,6 +158,81 @@ def all_findings() -> dict[str, Any]:
         "pending": pending,
         "by_severity": counts,
         "findings": items,
+    }
+
+
+def _tool_calls(tid: str) -> list[dict[str, Any]]:
+    return [e for e in MANAGER.events.get(tid, []) if e.get("type") == "tool_call"]
+
+
+@app.get("/api/attack-coverage")
+def attack_cov(task_id: str | None = None) -> dict[str, Any]:
+    """MITRE ATT&CK coverage matrix (tactics x techniques)."""
+    findings: list[dict[str, Any]] = []
+    tool_calls: list[dict[str, Any]] = []
+    tids = [task_id] if task_id else list(MANAGER.results.keys())
+    for tid in tids:
+        result = MANAGER.results.get(tid)
+        if result:
+            findings += result.report()["findings"]
+        tool_calls += _tool_calls(tid)
+    return attack_coverage(findings, tool_calls)
+
+
+@app.get("/api/tasks/{tid}/killchain")
+def killchain(tid: str) -> dict[str, Any]:
+    result = MANAGER.results.get(tid)
+    if result is None:
+        return {"steps": [], "summary": "Tâche sans graphe.", "length": 0}
+    return reconstruct_killchain(result.graph.to_dict())
+
+
+def _telemetry_for(tid: str) -> dict[str, Any]:
+    calls = _tool_calls(tid)
+    reward_series = [
+        {"step": i + 1, "phase": c.get("phase"), "tool": c.get("tool"),
+         "reward": c.get("reward", 0), "ran": c.get("ran", False)}
+        for i, c in enumerate(calls)
+    ]
+    # Predicted (prior) vs observed (IDS alerts) detection, per distinct tool.
+    tools = sorted({c.get("tool") for c in calls if c.get("tool")})
+    detection = [
+        {"tool": t, "predicted": round(prior_detection(t), 2), "observed_alerts": 0}
+        for t in tools
+    ]
+    total_alerts = 0  # live IDS telemetry wires in with the lab (Phase 4+)
+    # Stealth score in [0,1]: 1 when no alert was generated.
+    steps = max(1, len(calls))
+    stealth = round(max(0.0, 1.0 - total_alerts / (steps * 3.0)), 3)
+    return {
+        "task_id": tid,
+        "reward_series": reward_series,
+        "detection": detection,
+        "total_alerts": total_alerts,
+        "stealth_score": stealth,
+        "epsilon": float(os.environ.get("NZOYI_RL_EPSILON", "0.2")),
+        "steps": len(calls),
+    }
+
+
+@app.get("/api/tasks/{tid}/telemetry")
+def task_telemetry(tid: str) -> dict[str, Any]:
+    if tid not in MANAGER.tasks:
+        raise HTTPException(404, "tâche inconnue")
+    return _telemetry_for(tid)
+
+
+@app.get("/api/telemetry")
+def global_telemetry() -> dict[str, Any]:
+    per_task = [_telemetry_for(tid) for tid in MANAGER.tasks]
+    scores = [t["stealth_score"] for t in per_task if t["steps"] > 0]
+    avg_stealth = round(sum(scores) / len(scores), 3) if scores else None
+    return {
+        "tasks": len(per_task),
+        "avg_stealth_score": avg_stealth,
+        "total_steps": sum(t["steps"] for t in per_task),
+        "total_alerts": sum(t["total_alerts"] for t in per_task),
+        "per_task": per_task,
     }
 
 
