@@ -85,12 +85,21 @@ class Engine:
                 emit("intent", {"phase": intent.phase, "target": intent.target})
                 outcome = await dispatcher.dispatch(intent)
                 outcomes.append(outcome)
-                emit("tool_call", {
-                    "phase": intent.phase, "target": intent.target,
-                    "tool": outcome.tool, "ran": outcome.ran,
-                    "reason": outcome.reason, "reward": round(outcome.reward, 3),
-                    "findings": outcome.findings,
-                })
+                # One event per worker sub-step (tool), or a single one if none ran.
+                if outcome.steps:
+                    for s in outcome.steps:
+                        emit("tool_call", {
+                            "phase": intent.phase, "target": intent.target,
+                            "tool": s["tool"], "ran": s["ran"], "reason": s["reason"],
+                            "reward": s["reward"], "findings": s["findings"],
+                        })
+                else:
+                    emit("tool_call", {
+                        "phase": intent.phase, "target": intent.target,
+                        "tool": outcome.tool, "ran": outcome.ran,
+                        "reason": outcome.reason, "reward": round(outcome.reward, 3),
+                        "findings": outcome.findings,
+                    })
 
         rep = build_report(task, graph, assets)
         emit("task_done", {"task_id": task_id, "summary": rep["summary"]})

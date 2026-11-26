@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import ipaddress
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -49,6 +49,7 @@ class DispatchOutcome:
     facts: int = 0
     findings: int = 0
     effective_delay_ms: float = 0.0
+    steps: list = field(default_factory=list)  # per-tool sub-results (worker)
 
 
 def host_of(target: str) -> str:
@@ -75,9 +76,11 @@ class Dispatcher:
         evidence_store: Any = None,
         root_target: str | None = None,
         task_name: str = "",
+        max_steps: int = 3,
     ) -> None:
         self.task_id = task_id
         self.task_name = task_name or task_id
+        self.max_steps = max_steps
         self._worker_seq = 0
         self.scope = scope
         self.graph = graph
@@ -118,88 +121,103 @@ class Dispatcher:
         }
 
     async def dispatch(self, intent: Intent) -> DispatchOutcome:
+        """Worker sous-agent : enchaîne plusieurs outils de la phase par intent.
+
+        Chaque étape passe par le RL (choix outil + évasion) puis les gates
+        (interception, governor). Les outils déjà tentés sont exclus pour que le
+        worker *progresse* dans la phase au lieu de répéter le même outil.
+        """
         host = host_of(intent.target)
 
-        # ── scope gate ───────────────────────────────────────────────────
         if not self.scope_gate.check(host).allowed:
             self.graph.set_status(intent.intent_node_id, "denied")
             return DispatchOutcome(intent, tool="", ran=False,
                                    reason=f"hors scope: {host}")
-
-        # ── budget gate ──────────────────────────────────────────────────
         if self.budget is not None and self.budget.should_wrap_up():
             self.graph.set_status(intent.intent_node_id, "blocked")
             return DispatchOutcome(intent, tool="", ran=False,
                                    reason="budget épuisé — wrap-up forcé")
 
-        # ── RL decision ──────────────────────────────────────────────────
-        state = self._state(intent.target, intent.phase)
-        decision = self.rl.next_action(self.task_id, state, intent.phase)
-        tool, ah = self._resolve_tool(intent.phase, decision)
-        if tool is None:
-            self.graph.set_status(intent.intent_node_id, "failed")
-            return DispatchOutcome(intent, tool=decision["tool"], ran=False,
-                                   reason=f"aucun outil pour la phase {intent.phase}")
-
-        # ── interception gate ────────────────────────────────────────────
-        self._worker_seq += 1
-        command = [tool.binary or tool.name, intent.target]
-        decision_gate = self.interception.check(
-            tool.name, command, tool.requires_interception
-        )
-        # Record every destructive / rule-matched decision in the audit trail.
-        if tool.requires_interception or not decision_gate.allowed:
-            det = decision_gate.detail or {}
-            action = det.get("action")
-            if decision_gate.allowed:
-                status, decided_by = "allowed", det.get("decided_by", "system")
-            elif action == "deny":
-                status, decided_by = "denied", "rule"
-            else:
-                status, decided_by = "pending", None
-            GLOBAL_APPROVALS.record(
-                task_id=self.task_id, task_name=self.task_name, tool=tool.name,
-                source=f"worker#{self._worker_seq}",
-                matched_rule=decision_gate.reason,
-                decision_source="rule" if decided_by == "rule" else "default",
-                arguments={"command": " ".join(command), **intent.params},
-                status=status, decided_by=decided_by,
-            )
-        if not decision_gate.allowed:
-            self.graph.set_status(intent.intent_node_id, "pending_approval")
-            return DispatchOutcome(intent, tool=tool.name, ran=False,
-                                   reason="approbation humaine requise")
-
-        # ── noise governor clamps the RL-proposed delay ──────────────────
-        effective_delay = self.governor.clamp_delay(decision["delay"])
-
-        # ── execute ──────────────────────────────────────────────────────
         self.graph.set_status(intent.intent_node_id, "running")
-        if self.budget is not None:
-            self.budget.charge(turns=1)
-        result = await tool.run(
-            intent.target, timing=decision["timing"], frag=decision["frag"],
-            delay=effective_delay, **intent.params,
-        )
+        steps: list[dict[str, Any]] = []
+        tried: set[str] = set()
+        tot_facts = tot_find = 0
+        tot_reward = 0.0
+        last_delay = 0.0
+        n_tools = len(self.registry.for_phase(intent.phase))
+        max_steps = min(self.max_steps, max(1, n_tools))
 
-        facts, findings, gain = self._write_back(intent, tool.name, result)
-        reward = compute_reward(result, objective_gain=gain)
-        self.rl.update(self.task_id, state, ah, reward.value, dict(state))
-        self.graph.set_status(
-            intent.intent_node_id, "done" if result.success else "failed"
-        )
+        for _ in range(max_steps):
+            state = self._state(intent.target, intent.phase)
+            decision = self.rl.next_action(self.task_id, state, intent.phase)
+            tool, ah = self._resolve_tool(intent.phase, decision, exclude=tried)
+            if tool is None:
+                break
+            tried.add(tool.name)
+            self._worker_seq += 1
+
+            command = [tool.binary or tool.name, intent.target]
+            dg = self.interception.check(tool.name, command, tool.requires_interception)
+            if tool.requires_interception or not dg.allowed:
+                det = dg.detail or {}
+                if dg.allowed:
+                    st, by = "allowed", det.get("decided_by", "system")
+                elif det.get("action") == "deny":
+                    st, by = "denied", "rule"
+                else:
+                    st, by = "pending", None
+                GLOBAL_APPROVALS.record(
+                    task_id=self.task_id, task_name=self.task_name, tool=tool.name,
+                    source=f"worker#{self._worker_seq}", matched_rule=dg.reason,
+                    decision_source="rule" if by == "rule" else "default",
+                    arguments={"command": " ".join(command), **intent.params},
+                    status=st, decided_by=by,
+                )
+            if not dg.allowed:
+                steps.append({"tool": tool.name, "ran": False, "reward": 0.0,
+                              "facts": 0, "findings": 0,
+                              "reason": "approbation humaine requise"})
+                continue  # try another tool of the phase
+
+            last_delay = self.governor.clamp_delay(decision["delay"])
+            if self.budget is not None:
+                self.budget.charge(turns=1)
+            result = await tool.run(
+                intent.target, timing=decision["timing"], frag=decision["frag"],
+                delay=last_delay, **intent.params,
+            )
+            f, fi, gain = self._write_back(intent, tool.name, result)
+            reward = compute_reward(result, objective_gain=gain)
+            self.rl.update(self.task_id, state, ah, reward.value, dict(state))
+            tot_facts += f
+            tot_find += fi
+            tot_reward += reward.value
+            steps.append({
+                "tool": tool.name, "ran": not result.skipped,
+                "reward": round(reward.value, 3), "facts": f, "findings": fi,
+                "reason": "skipped (binaire absent)" if result.skipped else "",
+            })
+            # Phases de découverte : un résultat suffit, on ne spamme pas.
+            if (f or fi) and intent.phase in ("recon", "ad_enum"):
+                break
+
+        ran_any = any(s["ran"] for s in steps)
+        self.graph.set_status(intent.intent_node_id, "done" if ran_any else "failed")
+        primary = next((s for s in steps if s["ran"]), steps[0] if steps else None)
         return DispatchOutcome(
-            intent=intent, tool=tool.name, ran=not result.skipped,
-            reason="skipped (binaire absent)" if result.skipped else "",
-            reward=reward.value, facts=facts, findings=findings,
-            effective_delay_ms=effective_delay,
+            intent=intent, tool=(primary or {}).get("tool", ""),
+            ran=ran_any,
+            reason="" if ran_any else (steps[-1]["reason"] if steps else "aucun outil"),
+            reward=tot_reward, facts=tot_facts, findings=tot_find,
+            effective_delay_ms=last_delay, steps=steps,
         )
 
-    def _resolve_tool(self, phase: str, decision: dict[str, Any]):
+    def _resolve_tool(self, phase: str, decision: dict[str, Any],
+                      exclude: set[str] = frozenset()):
         tool = self.registry.get(decision["tool"])
-        if tool is not None and phase in tool.phases:
+        if tool is not None and phase in tool.phases and tool.name not in exclude:
             return tool, decision["action_hash"]
-        phase_tools = self.registry.for_phase(phase)
+        phase_tools = [t for t in self.registry.for_phase(phase) if t.name not in exclude]
         if not phase_tools:
             return None, decision["action_hash"]
         tool = phase_tools[0]
