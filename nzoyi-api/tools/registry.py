@@ -4,8 +4,20 @@ from __future__ import annotations
 
 from tools.base import Tool
 from tools.implementations.nmap import NmapTool
+from tools.implementations.rustscan import RustscanTool
+from tools.implementations.httpx import HttpxTool
+from tools.implementations.subfinder import SubfinderTool
 from tools.implementations.nuclei import NucleiTool
+from tools.implementations.ffuf import FfufTool
+from tools.implementations.sqlmap import SqlmapTool
+from tools.implementations.nikto import NiktoTool
 from tools.implementations.netexec import NetexecTool
+from tools.implementations.impacket import ImpacketTool
+from tools.implementations.bloodhound import BloodHoundTool
+from tools.implementations.sharphound import SharpHoundTool
+from tools.implementations.linpeas import LinpeasTool
+from tools.implementations.linux_exploit_suggester import LinuxExploitSuggesterTool
+from tools.implementations.chisel import ChiselTool
 
 
 class ToolRegistry:
@@ -28,8 +40,25 @@ class ToolRegistry:
 
 
 def default_registry() -> ToolRegistry:
-    """Phase 2 catalogue: nmap (recon), nuclei (vuln), netexec (ad_enum)."""
+    """Full P0 + P1 catalogue (Phase 2–3).
+
+    Tools whose binary is absent degrade to ``skipped`` at run time, so the
+    registry can list everything while the host installs only part of the
+    toolchain.
+    """
     reg = ToolRegistry()
-    for tool in (NmapTool(), NucleiTool(), NetexecTool()):
+    tools = [
+        # recon
+        NmapTool(), RustscanTool(), HttpxTool(), SubfinderTool(),
+        # vuln
+        NucleiTool(), FfufTool(), SqlmapTool(), NiktoTool(),
+        # ad_enum
+        NetexecTool(), ImpacketTool(), BloodHoundTool(), SharpHoundTool(),
+        # linux priv-esc
+        LinpeasTool(), LinuxExploitSuggesterTool(),
+        # lateral
+        ChiselTool(),
+    ]
+    for tool in tools:
         reg.register(tool)
     return reg
