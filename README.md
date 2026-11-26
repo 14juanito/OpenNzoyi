@@ -278,7 +278,21 @@ Puis P1 : graphe d'exploration (React Flow), couverture d'actifs, trafic captur�
 
 ## Démarrage rapide
 
-### Prérequis
+### Docker (recommandé — stack complète)
+
+```bash
+cp .env.example .env     # ajuste POSTGRES_PASSWORD, etc.
+docker compose up -d     # db + core (RL) + api + web
+#   UI        → http://localhost:3000
+#   API       → http://localhost:8000
+#   RL core   → http://localhost:8800
+```
+
+Les migrations Alembic sont appliquées automatiquement au démarrage de `api`.
+Les binaires offensifs (nmap, nuclei, …) ne sont pas inclus dans les images :
+installe-les dans le lab ou monte un volume d'outillage.
+
+### Prérequis (exécution native)
 
 - Python 3.11+
 - Kali Linux bare-metal avec KVM/QEMU (libvirt)
@@ -406,12 +420,18 @@ déplacé tel quel ; les 72 tests d'origine restent verts à chaque étape.
 | Phase | Contenu | Statut |
 |-------|---------|--------|
 | **1** | Extraction du RL → microservice `nzoyi-core` + schéma PostgreSQL (Alembic, 13 tables) | ✅ **Livrée** |
-| **2** | `Planner` + `Dispatcher` + 3 outils (nmap, nuclei, netexec), boucle end-to-end | ⏳ À venir |
-| **3** | Catalogue d'outils P0/P1 (recon, vuln, AD, Linux priv-esc) | ⏳ |
-| **4** | Proxy MITM (preuves) + garde-fous (scope / interception / budget) + `restore_lab.sh` | ⏳ |
-| **5** | UI `nzoyi-web` (Next.js, design system OpenZoyi) | ⏳ |
-| **6** | Outils P2 (Certipy, evil-winrm, Rubeus, SDN-toolkit, scapy) + packaging Docker Compose | ⏳ |
-| **7** | `docker compose up -d` sur machine vierge, documentation complète | ⏳ |
+| **2** | `Planner` + `Dispatcher` + 3 outils (nmap, nuclei, netexec), boucle end-to-end | ✅ **Livrée** |
+| **3** | Catalogue d'outils P0/P1 (recon, vuln, AD, Linux priv-esc) | ✅ **Livrée** |
+| **4** | Proxy MITM (preuves) + garde-fous (scope / interception / budget) + `restore_lab.sh` | ✅ **Livrée** |
+| **5** | UI `nzoyi-web` (Next.js, design system OpenZoyi) | ✅ **Livrée** |
+| **6** | Outils P2 (Certipy, evil-winrm, Rubeus, SDN-toolkit, scapy) + packaging Docker Compose | ✅ **Livrée** |
+| **7** | `docker compose up -d` sur machine vierge, documentation complète | ✅ **Livrée** |
+
+> Statut : les 7 phases de la refonte sont implémentées. Le catalogue d'outils
+> expose des **wrappers** autour de binaires standard (nmap, nuclei, netexec,
+> impacket, mimikatz, …) que l'opérateur installe dans son lab autorisé ; aucun
+> payload n'est embarqué, et chaque wrapper dégrade proprement si le binaire est
+> absent. Les actions destructrices passent par l'*interception gate*.
 
 Garde-fous non négociables, vérifiés par `scripts/verify.sh` :
 **(1)** 72/72 tests · **(2)** zéro import LLM dans `nzoyi-core/evasion/` ·
