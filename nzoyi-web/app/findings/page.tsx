@@ -86,7 +86,19 @@ export default function FindingsPage() {
               {findings.map((f: Finding, i) => (
                 <tr key={f.id} className={`border-b border-nzoyi-border/60 ${i % 2 ? "bg-nzoyi-bg/40" : ""}`}>
                   <td className="py-3"><SeverityBadge severity={f.severity} /></td>
-                  <td className="py-3 font-medium">{f.title}</td>
+                  <td className="py-3 font-medium">
+                    {f.title}
+                    {f.attack && f.attack.length > 0 && (
+                      <span className="ml-2 inline-flex gap-1 align-middle">
+                        {f.attack.map((a) => (
+                          <span key={a.id} title={a.name}
+                                className="rounded bg-nzoyi-ink/5 px-1.5 py-0.5 font-mono text-[10px] text-nzoyi-slate">
+                            {a.id}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 font-mono text-xs text-nzoyi-slate">{f.matched_at ?? "—"}</td>
                   <td className="py-3 text-nzoyi-slate">{f.status}</td>
                   <td className="py-3">

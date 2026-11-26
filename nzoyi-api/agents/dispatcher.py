@@ -23,11 +23,13 @@ from urllib.parse import urlparse
 from agents.evaluation import compute_reward
 from agents.noise_governor import NoiseGovernor
 from agents.planner import Intent
+from gates.approvals import GLOBAL_APPROVALS
 from gates.budget import Budget
 from gates.interception_gate import ApprovalRule, InterceptionGate
 from gates.scope_gate import ScopeGate
 from graph.assets import AssetGraph
 from graph.exploration import ExplorationGraph
+from knowledge.tool_signatures import attack_techniques
 from tools.registry import ToolRegistry
 
 _CORE_DIR = Path(__file__).resolve().parent.parent.parent / "nzoyi-core"
@@ -71,8 +73,11 @@ class Dispatcher:
         governor: NoiseGovernor | None = None,
         evidence_store: Any = None,
         root_target: str | None = None,
+        task_name: str = "",
     ) -> None:
         self.task_id = task_id
+        self.task_name = task_name or task_id
+        self._worker_seq = 0
         self.scope = scope
         self.graph = graph
         self.assets = assets
@@ -135,10 +140,29 @@ class Dispatcher:
                                    reason=f"aucun outil pour la phase {intent.phase}")
 
         # ── interception gate ────────────────────────────────────────────
+        self._worker_seq += 1
         command = [tool.binary or tool.name, intent.target]
         decision_gate = self.interception.check(
             tool.name, command, tool.requires_interception
         )
+        # Record every destructive / rule-matched decision in the audit trail.
+        if tool.requires_interception or not decision_gate.allowed:
+            det = decision_gate.detail or {}
+            action = det.get("action")
+            if decision_gate.allowed:
+                status, decided_by = "allowed", det.get("decided_by", "system")
+            elif action == "deny":
+                status, decided_by = "denied", "rule"
+            else:
+                status, decided_by = "pending", None
+            GLOBAL_APPROVALS.record(
+                task_id=self.task_id, task_name=self.task_name, tool=tool.name,
+                source=f"worker#{self._worker_seq}",
+                matched_rule=decision_gate.reason,
+                decision_source="rule" if decided_by == "rule" else "default",
+                arguments={"command": " ".join(command), **intent.params},
+                status=status, decided_by=decided_by,
+            )
         if not decision_gate.allowed:
             self.graph.set_status(intent.intent_node_id, "pending_approval")
             return DispatchOutcome(intent, tool=tool.name, ran=False,
@@ -225,7 +249,8 @@ class Dispatcher:
                     "finding",
                     {"title": f.get("name") or f.get("template_id"),
                      "severity": f.get("severity", "info"),
-                     "matched_at": f.get("matched_at"), "tool": tool_name},
+                     "matched_at": f.get("matched_at"), "tool": tool_name,
+                     "attack": attack_techniques(tool_name)},
                     agent="dispatcher",
                 )
                 self.graph.add_edge(fact.id, node.id, "proves")

@@ -7,6 +7,7 @@ type Item = { href: string; label: string; icon: string };
 
 const functions: Item[] = [
   { href: "/", label: "Dashboard", icon: "grid" },
+  { href: "/chat", label: "Chat", icon: "chat" },
   { href: "/tasks", label: "Tâches", icon: "list" },
   { href: "/findings", label: "Findings", icon: "bug" },
   { href: "/traffic", label: "Trafic", icon: "activity" },
@@ -20,6 +21,7 @@ const system: Item[] = [
 
 const paths: Record<string, string> = {
   grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  chat: "M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z",
   list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
   bug: "M8 2l1.5 1.5M16 2l-1.5 1.5M12 20v-9M5 13H2m20 0h-3M6 9a6 6 0 0112 0v4a6 6 0 01-12 0zM5 7L3 5m16 2l2-2M5 19l-2 2m16-2l2 2",
   activity: "M22 12h-4l-3 9L9 3l-3 9H2",

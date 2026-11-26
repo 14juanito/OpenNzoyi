@@ -21,12 +21,14 @@ export type Task = {
   steps_ran?: number;
 };
 
+export type AttackTechnique = { id: string; name: string };
 export type Finding = {
   id: string;
   title: string;
   severity: Severity;
   matched_at?: string | null;
   tool?: string | null;
+  attack?: AttackTechnique[];
   status: string;
   task_id?: string;
   task_name?: string;
@@ -50,6 +52,19 @@ export type Flow = {
 export type GraphData = {
   nodes: { id: string; type: string; content: any; status: string; agent?: string }[];
   edges: { source: string; target: string; relation: string }[];
+};
+
+export type ChatMsg = { role: "user" | "assistant"; text: string; ts: string };
+export type Conversation = {
+  id: string; title: string; task_id?: string | null;
+  created_at: string; messages: ChatMsg[];
+};
+
+export type ApprovalRecord = {
+  seq: number; task_id: string; task_name: string; tool: string; source: string;
+  matched_rule: string; decision_source: string; arguments: Record<string, any>;
+  status: "allowed" | "denied" | "pending";
+  decided_by: string | null; requested_at: string; decided_at: string | null;
 };
 
 async function j<T>(res: Response): Promise<T> {
@@ -81,4 +96,36 @@ export const api = {
       j<{ events: any[]; workers: any[] }>
     ),
   streamUrl: (id: string) => `${API_URL}/api/tasks/${id}/stream`,
+
+  // chat (main agent)
+  listConversations: () =>
+    fetch(`${API_URL}/api/chat/conversations`).then(j<Conversation[]>),
+  createConversation: (body: { title?: string; task_id?: string | null }) =>
+    fetch(`${API_URL}/api/chat/conversations`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(j<Conversation>),
+  getConversation: (cid: string) =>
+    fetch(`${API_URL}/api/chat/conversations/${cid}`).then(j<Conversation>),
+  sendMessage: (cid: string, text: string) =>
+    fetch(`${API_URL}/api/chat/conversations/${cid}/message`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    }).then(j<ChatMsg>),
+  injectHint: (taskId: string, phase: string, text = "") =>
+    fetch(`${API_URL}/api/tasks/${taskId}/hint`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phase, text }),
+    }).then(j),
+
+  // approvals
+  approvalRecords: () =>
+    fetch(`${API_URL}/api/approval-records`).then(
+      j<{ total: number; pending_count: number; records: ApprovalRecord[] }>
+    ),
+  decideApproval: (seq: number, status: "allowed" | "denied") =>
+    fetch(`${API_URL}/api/approvals/${seq}/decide`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).then(j<ApprovalRecord>),
 };

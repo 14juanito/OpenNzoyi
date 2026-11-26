@@ -51,6 +51,24 @@ class Planner:
         target = goal.content.get("target", "")
         intents: list[Intent] = []
 
+        # 0) Human-injected hints are consumed first (high priority).
+        hints = self.graph.nodes_of("hint", status="open")
+        if hints:
+            for hint in hints:
+                phase = hint.content.get("phase")
+                htarget = hint.content.get("target") or target
+                if phase:
+                    self.graph.set_status(hint.id, "consumed")
+                    node = self.graph.add_node(
+                        "intent", {"phase": phase, "target": htarget, "from_hint": True},
+                        status="open", agent="planner",
+                    )
+                    self.graph.add_edge(hint.id, node.id, "spawns")
+                    intents.append(Intent(phase=phase, target=htarget,
+                                          goal_node_id=goal.id, intent_node_id=node.id))
+            if intents:
+                return intents
+
         # 1) Recon first, once per target.
         if not self._has_fact("recon", target):
             intents.append(self._spawn("recon", target, goal.id))

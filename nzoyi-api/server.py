@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 from engine import Engine, EngineResult
 from evidence.capture import GLOBAL_STORE
+from gates.approvals import GLOBAL_APPROVALS
 
 _SEV = ["critical", "high", "medium", "low", "info"]
 
@@ -268,19 +269,113 @@ def retest_finding(fid: str) -> dict[str, Any]:
     return {"id": fid, "retest_status": "queued"}
 
 
-# ── approvals & LLM profiles (stubs — étoffés en Phase 6) ────────────────
-_APPROVALS: list[dict[str, Any]] = []
-_LLM_PROFILES: list[dict[str, Any]] = []
-
-
+# ── approval records (interception audit trail) ──────────────────────────
 @app.get("/api/approvals")
 def approvals() -> list[dict[str, Any]]:
-    return _APPROVALS
+    """Pending approvals (awaiting a human decision)."""
+    return [r.to_dict() for r in GLOBAL_APPROVALS.pending()]
 
 
-@app.post("/api/approvals/{aid}/decide")
-def decide(aid: str, decision: dict[str, Any]) -> dict[str, Any]:
-    return {"id": aid, "status": decision.get("status", "approved")}
+@app.get("/api/approval-records")
+def approval_records() -> dict[str, Any]:
+    """Full audit trail of interception decisions."""
+    records = [r.to_dict() for r in GLOBAL_APPROVALS.all()]
+    pending = [r for r in records if r["status"] == "pending"]
+    return {"total": len(records), "pending_count": len(pending), "records": records}
+
+
+class Decision(BaseModel):
+    status: str = Field(pattern="^(allowed|denied)$")
+
+
+@app.post("/api/approvals/{seq}/decide")
+def decide(seq: int, decision: Decision) -> dict[str, Any]:
+    rec = GLOBAL_APPROVALS.decide(seq, decision.status, decided_by="human")
+    if rec is None:
+        raise HTTPException(404, "approbation inconnue")
+    return rec.to_dict()
+
+
+# ── chat with the main agent (human-in-the-loop) ─────────────────────────
+from agents.main_agent import analyze as _analyze  # noqa: E402
+
+_CONVERSATIONS: dict[str, dict[str, Any]] = {}
+
+
+class ConvCreate(BaseModel):
+    title: str = "Nouvelle conversation"
+    task_id: str | None = None
+
+
+class ChatMessage(BaseModel):
+    text: str
+
+
+class Hint(BaseModel):
+    phase: str
+    target: str | None = None
+    text: str = ""
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+@app.get("/api/chat/conversations")
+def list_conversations() -> list[dict[str, Any]]:
+    return sorted(_CONVERSATIONS.values(), key=lambda c: c["created_at"], reverse=True)
+
+
+@app.post("/api/chat/conversations")
+def create_conversation(body: ConvCreate) -> dict[str, Any]:
+    cid = str(uuid.uuid4())
+    conv = {"id": cid, "title": body.title, "task_id": body.task_id,
+            "created_at": _now_iso(), "messages": []}
+    _CONVERSATIONS[cid] = conv
+    return conv
+
+
+@app.get("/api/chat/conversations/{cid}")
+def get_conversation(cid: str) -> dict[str, Any]:
+    if cid not in _CONVERSATIONS:
+        raise HTTPException(404, "conversation inconnue")
+    return _CONVERSATIONS[cid]
+
+
+@app.post("/api/chat/conversations/{cid}/message")
+def post_message(cid: str, msg: ChatMessage) -> dict[str, Any]:
+    conv = _CONVERSATIONS.get(cid)
+    if conv is None:
+        raise HTTPException(404, "conversation inconnue")
+    conv["messages"].append({"role": "user", "text": msg.text, "ts": _now_iso()})
+
+    tid = conv.get("task_id")
+    task = MANAGER.tasks.get(tid) if tid else None
+    graph = MANAGER.results[tid].graph.to_dict() if (tid and tid in MANAGER.results) else {"nodes": []}
+    reply = _analyze(task or {"target": "—"}, graph, msg.text)
+    assistant = {"role": "assistant", "text": reply, "ts": _now_iso()}
+    conv["messages"].append(assistant)
+    return assistant
+
+
+@app.post("/api/tasks/{tid}/hint")
+def inject_hint(tid: str, hint: Hint) -> dict[str, Any]:
+    if tid not in MANAGER.tasks:
+        raise HTTPException(404, "tâche inconnue")
+    result = MANAGER.results.get(tid)
+    if result is None:
+        raise HTTPException(409, "la tâche n'a pas encore de graphe d'exploration")
+    target = hint.target or MANAGER.tasks[tid]["target"]
+    node = result.graph.add_node(
+        "hint", {"phase": hint.phase, "target": target, "text": hint.text},
+        status="open", agent="operator",
+    )
+    MANAGER._emit(tid, {"type": "hint", "phase": hint.phase, "target": target})
+    return {"id": node.id, "phase": hint.phase, "target": target, "status": "open"}
+
+
+# ── LLM profiles (stub) ──────────────────────────────────────────────────
+_LLM_PROFILES: list[dict[str, Any]] = []
 
 
 @app.get("/api/llm/profiles")

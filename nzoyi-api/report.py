@@ -26,6 +26,7 @@ def build_report(
                 "severity": n.content.get("severity", "info"),
                 "matched_at": n.content.get("matched_at"),
                 "tool": n.content.get("tool"),
+                "attack": n.content.get("attack", []),
                 "status": "unverified",
             }
         )

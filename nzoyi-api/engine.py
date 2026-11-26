@@ -66,7 +66,7 @@ class Engine:
         planner = Planner(graph, assets)
         dispatcher = Dispatcher(
             task_id, scope, graph, assets, self.registry, self.rl,
-            profile=profile, root_target=host_of(target),
+            profile=profile, root_target=host_of(target), task_name=name,
         )
 
         def emit(kind: str, data: dict[str, Any]) -> None:

@@ -56,3 +56,39 @@ def signature(tool: str) -> dict[str, Any]:
 
 def prior_detection(tool: str) -> float:
     return float(signature(tool)["detection_probability"])
+
+
+# ── MITRE ATT&CK mapping ─────────────────────────────────────────────────
+# Technique IDs most representative of what each tool exercises. Used to tag
+# findings and build an ATT&CK coverage view. Names kept short for the UI.
+ATTACK_TECHNIQUES: dict[str, list[dict[str, str]]] = {
+    "nmap": [{"id": "T1046", "name": "Network Service Discovery"}],
+    "rustscan": [{"id": "T1046", "name": "Network Service Discovery"}],
+    "httpx": [{"id": "T1595", "name": "Active Scanning"}],
+    "subfinder": [{"id": "T1590", "name": "Gather Victim Network Info"}],
+    "nuclei": [{"id": "T1595.002", "name": "Vulnerability Scanning"}],
+    "ffuf": [{"id": "T1595.003", "name": "Wordlist Scanning"}],
+    "sqlmap": [{"id": "T1190", "name": "Exploit Public-Facing Application"}],
+    "nikto": [{"id": "T1595.002", "name": "Vulnerability Scanning"}],
+    "netexec": [{"id": "T1135", "name": "Network Share Discovery"},
+                {"id": "T1110", "name": "Brute Force"}],
+    "impacket": [{"id": "T1557", "name": "AiTM / Relay"},
+                 {"id": "T1003.006", "name": "DCSync"}],
+    "bloodhound": [{"id": "T1482", "name": "Domain Trust Discovery"}],
+    "sharphound": [{"id": "T1069.002", "name": "Domain Groups Discovery"}],
+    "linpeas": [{"id": "T1082", "name": "System Information Discovery"}],
+    "linux-exploit-suggester": [{"id": "T1068", "name": "Privilege Escalation"}],
+    "chisel": [{"id": "T1572", "name": "Protocol Tunneling"}],
+    "certipy": [{"id": "T1649", "name": "Steal/Forge AD Certificates"}],
+    "evil-winrm": [{"id": "T1021.006", "name": "WinRM"}],
+    "rubeus": [{"id": "T1558.003", "name": "Kerberoasting"}],
+    "mimikatz": [{"id": "T1003.001", "name": "LSASS Memory"}],
+    "winpeas": [{"id": "T1082", "name": "System Information Discovery"}],
+    "sdn-toolkit": [{"id": "T1599", "name": "Network Boundary Bridging"}],
+    "scapy_evasion": [{"id": "T1572", "name": "Protocol Tunneling"},
+                      {"id": "T1001", "name": "Data Obfuscation"}],
+}
+
+
+def attack_techniques(tool: str) -> list[dict[str, str]]:
+    return ATTACK_TECHNIQUES.get(tool, [])

@@ -67,3 +67,31 @@ def test_findings_and_traffic_endpoints():
     # enriched task list
     enriched = client.get("/api/tasks").json()
     assert all("findings_by_severity" in t and "steps" in t for t in enriched)
+
+
+def test_approval_records_endpoints():
+    r = client.get("/api/approval-records").json()
+    assert "total" in r and "records" in r and "pending_count" in r
+    assert client.get("/api/approvals").status_code == 200
+
+
+def test_chat_and_hint():
+    task = MANAGER.create(TaskCreate(
+        name="chat", target="192.168.100.11",
+        scope={"cidrs": ["192.168.100.0/24"], "domains": []}, profile="quiet"))
+    asyncio.run(MANAGER.run(task["id"]))
+    conv = client.post("/api/chat/conversations",
+                       json={"title": "c1", "task_id": task["id"]}).json()
+    reply = client.post(f"/api/chat/conversations/{conv['id']}/message",
+                        json={"text": "résume la situation"}).json()
+    assert reply["role"] == "assistant" and len(reply["text"]) > 0
+    # inject a hint → creates an open hint node in the graph
+    h = client.post(f"/api/tasks/{task['id']}/hint",
+                    json={"phase": "vuln", "text": "focus login"}).json()
+    assert h["phase"] == "vuln" and h["status"] == "open"
+
+
+def test_attack_techniques_present():
+    from knowledge.tool_signatures import attack_techniques
+    assert attack_techniques("mimikatz")[0]["id"] == "T1003.001"
+    assert attack_techniques("nmap")[0]["id"] == "T1046"
