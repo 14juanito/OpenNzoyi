@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agents.dispatcher import Dispatcher, DispatchOutcome, host_of
-from agents.planner import Planner
+from agents.llm_planner import LLMPlanner
 from graph.assets import AssetGraph
 from graph.exploration import ExplorationGraph
 from report import build_report
@@ -63,7 +63,7 @@ class Engine:
                        status="open", agent="engine")
         self._seed_asset(assets, host_of(target))
 
-        planner = Planner(graph, assets)
+        planner = LLMPlanner(graph, assets, scope, host_of(target))
         dispatcher = Dispatcher(
             task_id, scope, graph, assets, self.registry, self.rl,
             profile=profile, root_target=host_of(target), task_name=name,
