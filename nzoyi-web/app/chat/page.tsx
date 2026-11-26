@@ -48,7 +48,7 @@ export default function ChatPage() {
     await api.injectHint(active.task_id, hintPhase, "hint injecté depuis le chat").catch(() => {});
     const note: ChatMsg = {
       role: "assistant",
-      text: `✅ Hint injecté : phase « ${hintPhase} » priorisée. Le Planner le consommera en premier au prochain cycle.`,
+      text: `Hint injecté : phase « ${hintPhase} » priorisée. Le Planner le consommera en premier au prochain cycle.`,
       ts: new Date().toISOString(),
     };
     setActive((a) => (a ? { ...a, messages: [...a.messages, note] } : a));
@@ -94,7 +94,9 @@ export default function ChatPage() {
           <>
             <div className="mb-3 flex items-center justify-between border-b border-nzoyi-border pb-3">
               <div>
-                <p className="font-semibold">🐝 Main agent</p>
+                <p className="flex items-center gap-2 font-semibold">
+                  <img src="/openzoyi-bee.png" alt="" className="h-5 w-5" /> Main agent
+                </p>
                 <p className="text-xs text-nzoyi-slate">
                   Human-in-the-loop · injecte des hints / intents prioritaires
                 </p>

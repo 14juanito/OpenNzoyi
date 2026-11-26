@@ -52,21 +52,46 @@ Ce qui le distingue d'un scanner classique :
 
 <p align="center">
   <img src="assets/ui/dashboard.png" width="90%" alt="Dashboard OpenNzoyi">
-  <br><sub>Dashboard — cartes de résumé, tâches récentes, état du système (charte OpenNzoyi).</sub>
+  <br><sub><b>Dashboard</b> — cartes de résumé, tâches récentes, état du système (charte OpenNzoyi).</sub>
 </p>
 
 <table>
   <tr>
     <td width="50%">
+      <img src="assets/ui/chat.png" alt="Chat main agent">
+      <br><sub><b>Chat — main agent</b> (human-in-the-loop) : analyse du graphe, orientation, injection de hints prioritaires.</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/ui/task-graph.png" alt="Graphe d'exploration">
+      <br><sub><b>Graphe d'exploration</b> (React Flow) — nœuds goal/intent/fact/finding, arêtes colorées par relation.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/ui/tasks.png" alt="Gestion des tâches">
+      <br><sub><b>Tâches</b> — statut, étapes, findings (C/H/M/L) par audit.</sub>
+    </td>
+    <td width="50%">
+      <img src="assets/ui/findings.png" alt="Findings cross-task">
+      <br><sub><b>Findings</b> — vue multi-tâches, stat cards par sévérité, tags MITRE ATT&CK.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/ui/traffic.png" alt="Trafic MITM">
+      <br><sub><b>Trafic</b> — flux capturés par le proxy MITM (port 8788).</sub>
+    </td>
+    <td width="50%">
       <img src="assets/ui/live.png" alt="Vue live SSE">
       <br><sub><b>Vue live</b> — flux SSE des tool calls, décisions du RL, compteurs.</sub>
     </td>
-    <td width="50%">
-      <img src="assets/ui/new-task.png" alt="Création de tâche">
-      <br><sub><b>Nouvelle tâche</b> — cible, scope, profil de discrétion, budgets.</sub>
-    </td>
   </tr>
 </table>
+
+<p align="center">
+  <img src="assets/ui/approvals.png" width="90%" alt="Approval records">
+  <br><sub><b>Approbations</b> — journal des décisions d'interception (outil, règle, arguments, statut), autoriser / refuser les actions destructrices.</sub>
+</p>
 
 ---
 
