@@ -53,7 +53,7 @@ class OrchestratorAgent(BaseAgent):
         self.enumerator = EnumeratorAgent(ptt, profile)
         self.vulnerability = VulnerabilityAgent(ptt, profile, use_llm=use_llm)
         self.attack = AttackAgent(ptt, profile, use_llm=use_llm)
-        # Ordered agent list consumed by the interactive runners (nzoyi.ui).
+        # Ordered agent list (legacy research pipeline, exercised by the tests).
         self.pipeline: list[BaseAgent] = [
             self.recon,
             self.enumerator,

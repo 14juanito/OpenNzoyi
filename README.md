@@ -1,9 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1F2937,50:F59E0B,100:1F2937&height=180&section=header&text=Open%E2%80%99Zoyi&fontSize=58&fontAlignY=36&fontColor=F59E0B&desc=Outil%20d%27audit%20de%20s%C3%A9curit%C3%A9%20autonome&descAlignY=56&descColor=FFFFFF" width="100%" alt="OpenZoyi banner">
-</p>
-
-<p align="center">
-  <img src="assets/openzoyi-wordmark.png" width="420" alt="Open'Zoyi — Multi-agent automated intrusion system">
+  <img src="assets/openzoyi-wordmark.png" width="440" alt="Open'Zoyi — Multi-agent automated intrusion system">
 </p>
 
 <p align="center">
@@ -258,6 +254,7 @@ décline toute responsabilité en cas d'usage illégal.
 **Jean El-rohi Mukendi** — Faculté des Sciences Informatiques, Université
 Protestante au Congo (UPC).
 
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1F2937,50:F59E0B,100:1F2937&height=100&section=footer" width="100%" alt="footer">
-</p>
+## Licence
+
+Projet de recherche académique. Usage restreint aux tests autorisés sur un
+environnement contrôlé.
