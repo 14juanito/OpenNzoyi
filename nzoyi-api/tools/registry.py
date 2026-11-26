@@ -18,6 +18,13 @@ from tools.implementations.sharphound import SharpHoundTool
 from tools.implementations.linpeas import LinpeasTool
 from tools.implementations.linux_exploit_suggester import LinuxExploitSuggesterTool
 from tools.implementations.chisel import ChiselTool
+from tools.implementations.certipy import CertipyTool
+from tools.implementations.evil_winrm import EvilWinrmTool
+from tools.implementations.rubeus import RubeusTool
+from tools.implementations.mimikatz import MimikatzTool
+from tools.implementations.winpeas import WinpeasTool
+from tools.implementations.sdn_toolkit import SdnToolkitTool
+from tools.implementations.scapy_evasion import ScapyEvasionTool
 
 
 class ToolRegistry:
@@ -58,6 +65,9 @@ def default_registry() -> ToolRegistry:
         LinpeasTool(), LinuxExploitSuggesterTool(),
         # lateral
         ChiselTool(),
+        # P2 — post / lateral / evasion
+        CertipyTool(), EvilWinrmTool(), RubeusTool(), MimikatzTool(),
+        WinpeasTool(), SdnToolkitTool(), ScapyEvasionTool(),
     ]
     for tool in tools:
         reg.register(tool)
