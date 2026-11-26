@@ -20,6 +20,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from engine import Engine, EngineResult
+from evidence.capture import GLOBAL_STORE
+
+_SEV = ["critical", "high", "medium", "low", "info"]
 
 app = FastAPI(title="NZOYI API", version="1.0.0")
 app.add_middleware(
@@ -102,9 +105,82 @@ def health() -> dict[str, Any]:
     return {"status": "ok", "service": "nzoyi-api", "tasks": len(MANAGER.tasks)}
 
 
+def _task_findings(tid: str) -> list[dict[str, Any]]:
+    result = MANAGER.results.get(tid)
+    return result.report()["findings"] if result else []
+
+
+def _sev_counts(findings: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {s: 0 for s in _SEV}
+    for f in findings:
+        counts[f.get("severity", "info")] = counts.get(f.get("severity", "info"), 0) + 1
+    return counts
+
+
+def _task_summary(task: dict[str, Any]) -> dict[str, Any]:
+    tid = task["id"]
+    findings = _task_findings(tid)
+    result = MANAGER.results.get(tid)
+    steps = len(result.outcomes) if result else 0
+    ran = sum(1 for o in result.outcomes if o.ran) if result else 0
+    return {
+        **task,
+        "findings_count": len(findings),
+        "findings_by_severity": _sev_counts(findings),
+        "steps": steps,
+        "steps_ran": ran,
+    }
+
+
 @app.get("/api/tasks")
 def list_tasks() -> list[dict[str, Any]]:
-    return list(MANAGER.tasks.values())
+    return [_task_summary(t) for t in MANAGER.tasks.values()]
+
+
+@app.get("/api/findings")
+def all_findings() -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    for tid, result in MANAGER.results.items():
+        tname = MANAGER.tasks.get(tid, {}).get("name", tid)
+        for f in result.report()["findings"]:
+            items.append({**f, "task_id": tid, "task_name": tname})
+    order = {s: i for i, s in enumerate(_SEV)}
+    items.sort(key=lambda f: order.get(f["severity"], 99))
+    counts = _sev_counts(items)
+    pending = sum(1 for f in items if f.get("status") in (None, "unverified", "pending"))
+    return {
+        "total": len(items),
+        "pending": pending,
+        "by_severity": counts,
+        "findings": items,
+    }
+
+
+@app.get("/api/traffic")
+def traffic(task_id: str | None = None, limit: int = 200) -> dict[str, Any]:
+    flows = [
+        ev.to_dict() for ev in GLOBAL_STORE.all()
+        if task_id is None or ev.task_id == task_id
+    ]
+    flows.sort(key=lambda e: e["captured_at"], reverse=True)
+    return {"count": len(flows), "flows": flows[:limit], "proxy_port": 8788}
+
+
+@app.get("/api/tasks/{tid}/sessions")
+def task_sessions(tid: str) -> dict[str, Any]:
+    if tid not in MANAGER.tasks:
+        raise HTTPException(404, "tâche inconnue")
+    events = MANAGER.events.get(tid, [])
+    tool_calls = [e for e in events if e.get("type") == "tool_call"]
+    workers = [
+        {
+            "phase": e.get("phase"), "tool": e.get("tool"), "target": e.get("target"),
+            "ran": e.get("ran"), "reward": e.get("reward"), "findings": e.get("findings"),
+            "ts": e.get("ts"),
+        }
+        for e in tool_calls
+    ]
+    return {"events": events, "workers": workers}
 
 
 @app.post("/api/tasks")

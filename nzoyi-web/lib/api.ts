@@ -1,6 +1,8 @@
-// Client minimal pour le backend nzoyi-api.
+// Client pour le backend nzoyi-api.
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+export type Severity = "info" | "low" | "medium" | "high" | "critical";
 
 export type Task = {
   id: string;
@@ -12,15 +14,42 @@ export type Task = {
   budget_tokens?: number | null;
   budget_turns?: number | null;
   created_at: string;
+  // enrichissements (liste)
+  findings_count?: number;
+  findings_by_severity?: Record<Severity, number>;
+  steps?: number;
+  steps_ran?: number;
 };
 
 export type Finding = {
   id: string;
   title: string;
-  severity: "info" | "low" | "medium" | "high" | "critical";
+  severity: Severity;
   matched_at?: string | null;
   tool?: string | null;
   status: string;
+  task_id?: string;
+  task_name?: string;
+};
+
+export type FindingsAgg = {
+  total: number;
+  pending: number;
+  by_severity: Record<Severity, number>;
+  findings: Finding[];
+};
+
+export type Flow = {
+  id: string;
+  task_id?: string | null;
+  request: { method?: string; url?: string; headers?: Record<string, string> };
+  response: { status?: number; headers?: Record<string, string> };
+  captured_at: string;
+};
+
+export type GraphData = {
+  nodes: { id: string; type: string; content: any; status: string; agent?: string }[];
+  edges: { source: string; target: string; relation: string }[];
 };
 
 async function j<T>(res: Response): Promise<T> {
@@ -39,7 +68,17 @@ export const api = {
     }).then(j<Task>),
   deleteTask: (id: string) =>
     fetch(`${API_URL}/api/tasks/${id}`, { method: "DELETE" }).then(j),
-  findings: (id: string) =>
+  taskFindings: (id: string) =>
     fetch(`${API_URL}/api/tasks/${id}/findings`).then(j<Finding[]>),
+  allFindings: () => fetch(`${API_URL}/api/findings`).then(j<FindingsAgg>),
+  traffic: (taskId?: string) =>
+    fetch(`${API_URL}/api/traffic${taskId ? `?task_id=${taskId}` : ""}`).then(
+      j<{ count: number; flows: Flow[]; proxy_port: number }>
+    ),
+  graph: (id: string) => fetch(`${API_URL}/api/tasks/${id}/graph`).then(j<GraphData>),
+  sessions: (id: string) =>
+    fetch(`${API_URL}/api/tasks/${id}/sessions`).then(
+      j<{ events: any[]; workers: any[] }>
+    ),
   streamUrl: (id: string) => `${API_URL}/api/tasks/${id}/stream`,
 };
