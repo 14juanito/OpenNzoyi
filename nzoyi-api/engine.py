@@ -63,7 +63,10 @@ class Engine:
         self._seed_asset(assets, host_of(target))
 
         planner = Planner(graph, assets)
-        dispatcher = Dispatcher(task_id, scope, graph, assets, self.registry, self.rl)
+        dispatcher = Dispatcher(
+            task_id, scope, graph, assets, self.registry, self.rl,
+            profile=profile, root_target=host_of(target),
+        )
 
         outcomes: list[DispatchOutcome] = []
         seen_intents: set[str] = set()

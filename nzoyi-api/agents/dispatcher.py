@@ -1,13 +1,14 @@
 """Dispatcher — resolves an intent into a concrete, guarded tool execution.
 
-Pipeline per intent (mission brief, section 9), Phase 2 subset:
+Pipeline per intent (mission brief, section 9):
 
-    scope check → rl.next_action(state, phase) → tool.run(evasion params)
+    scope gate → interception gate → budget → rl.next_action(state, phase)
+    → noise governor (clamp) → tool.run → evidence.capture/link
     → EvaluationAgent.reward → rl.update → graph.write_back
 
-Full gates (interception, budget, untrusted boundary) and the noise governor are
-added in Phase 4; a minimal in-scope check is enforced here already so the RL can
-*propose* an out-of-scope target but the dispatcher still refuses to run it.
+Gates and the governor are optional constructor arguments: when omitted the
+dispatcher builds safe defaults (autonomous interception, balanced governor, no
+budget ceiling), so the Phase 2/3 call sites keep working unchanged.
 """
 
 from __future__ import annotations
@@ -20,7 +21,11 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agents.evaluation import compute_reward
+from agents.noise_governor import NoiseGovernor
 from agents.planner import Intent
+from gates.budget import Budget
+from gates.interception_gate import ApprovalRule, InterceptionGate
+from gates.scope_gate import ScopeGate
 from graph.assets import AssetGraph
 from graph.exploration import ExplorationGraph
 from tools.registry import ToolRegistry
@@ -40,30 +45,13 @@ class DispatchOutcome:
     reward: float = 0.0
     facts: int = 0
     findings: int = 0
+    effective_delay_ms: float = 0.0
 
 
 def host_of(target: str) -> str:
     if "://" in target:
         return urlparse(target).hostname or target
     return target.split(":")[0]
-
-
-def in_scope(host: str, scope: dict[str, Any], assets: AssetGraph) -> bool:
-    # Scope authority is the declared CIDR / domain set. Membership in `assets`
-    # is an additional anti-invention check enforced by the full scope gate
-    # (Phase 4); it never *widens* scope on its own.
-    # In a declared CIDR?
-    for cidr in scope.get("cidrs", []):
-        try:
-            if ipaddress.ip_address(host) in ipaddress.ip_network(cidr, strict=False):
-                return True
-        except ValueError:
-            pass
-    # In a declared domain?
-    for dom in scope.get("domains", []):
-        if host == dom or host.endswith("." + dom):
-            return True
-    return False
 
 
 class Dispatcher:
@@ -75,6 +63,14 @@ class Dispatcher:
         assets: AssetGraph,
         registry: ToolRegistry,
         rl_client: Any,
+        *,
+        profile: str = "balanced",
+        interception_mode: str = "autonomous",
+        approval_rules: list[ApprovalRule] | None = None,
+        budget: Budget | None = None,
+        governor: NoiseGovernor | None = None,
+        evidence_store: Any = None,
+        root_target: str | None = None,
     ) -> None:
         self.task_id = task_id
         self.scope = scope
@@ -82,6 +78,13 @@ class Dispatcher:
         self.assets = assets
         self.registry = registry
         self.rl = rl_client
+        self.budget = budget
+        self.evidence = evidence_store
+        self.governor = governor or NoiseGovernor(profile)
+        self.interception = InterceptionGate(approval_rules, mode=interception_mode)
+        self.scope_gate = ScopeGate(
+            scope, known_assets=self.assets.values, root_target=root_target
+        )
 
     def _state(self, target: str, phase: str) -> dict[str, str]:
         host = host_of(target)
@@ -109,50 +112,53 @@ class Dispatcher:
 
     async def dispatch(self, intent: Intent) -> DispatchOutcome:
         host = host_of(intent.target)
-        if not in_scope(host, self.scope, self.assets):
-            self.graph.set_status(intent.intent_node_id, "denied")
-            return DispatchOutcome(
-                intent, tool="", ran=False, reason=f"hors scope: {host}"
-            )
 
+        # ── scope gate ───────────────────────────────────────────────────
+        if not self.scope_gate.check(host).allowed:
+            self.graph.set_status(intent.intent_node_id, "denied")
+            return DispatchOutcome(intent, tool="", ran=False,
+                                   reason=f"hors scope: {host}")
+
+        # ── budget gate ──────────────────────────────────────────────────
+        if self.budget is not None and self.budget.should_wrap_up():
+            self.graph.set_status(intent.intent_node_id, "blocked")
+            return DispatchOutcome(intent, tool="", ran=False,
+                                   reason="budget épuisé — wrap-up forcé")
+
+        # ── RL decision ──────────────────────────────────────────────────
         state = self._state(intent.target, intent.phase)
         decision = self.rl.next_action(self.task_id, state, intent.phase)
-        rl_tool = decision["tool"]
+        tool, ah = self._resolve_tool(intent.phase, decision)
+        if tool is None:
+            self.graph.set_status(intent.intent_node_id, "failed")
+            return DispatchOutcome(intent, tool=decision["tool"], ran=False,
+                                   reason=f"aucun outil pour la phase {intent.phase}")
 
-        # Honor the RL's tool when registered for this phase; else fall back to
-        # the first registered tool of the phase and recompute the action hash
-        # so the reward maps to what actually ran.
-        tool = self.registry.get(rl_tool)
-        if tool is None or intent.phase not in tool.phases:
-            phase_tools = self.registry.for_phase(intent.phase)
-            if not phase_tools:
-                self.graph.set_status(intent.intent_node_id, "failed")
-                return DispatchOutcome(
-                    intent, tool=rl_tool, ran=False,
-                    reason=f"aucun outil enregistré pour la phase {intent.phase}",
-                )
-            tool = phase_tools[0]
-            ah = action_hash(tool.name, decision["timing"], decision["delay"],
-                             decision["frag"])
-            if ah not in enumerate_action_hashes(intent.phase):
-                ah = decision["action_hash"]
-        else:
-            ah = decision["action_hash"]
+        # ── interception gate ────────────────────────────────────────────
+        command = [tool.binary or tool.name, intent.target]
+        decision_gate = self.interception.check(
+            tool.name, command, tool.requires_interception
+        )
+        if not decision_gate.allowed:
+            self.graph.set_status(intent.intent_node_id, "pending_approval")
+            return DispatchOutcome(intent, tool=tool.name, ran=False,
+                                   reason="approbation humaine requise")
 
+        # ── noise governor clamps the RL-proposed delay ──────────────────
+        effective_delay = self.governor.clamp_delay(decision["delay"])
+
+        # ── execute ──────────────────────────────────────────────────────
         self.graph.set_status(intent.intent_node_id, "running")
+        if self.budget is not None:
+            self.budget.charge(turns=1)
         result = await tool.run(
-            intent.target,
-            timing=decision["timing"],
-            frag=decision["frag"],
-            **intent.params,
+            intent.target, timing=decision["timing"], frag=decision["frag"],
+            delay=effective_delay, **intent.params,
         )
 
         facts, findings, gain = self._write_back(intent, tool.name, result)
-
         reward = compute_reward(result, objective_gain=gain)
-        next_state = dict(state)  # Phase 2: no explicit phase transition yet
-        self.rl.update(self.task_id, state, ah, reward.value, next_state)
-
+        self.rl.update(self.task_id, state, ah, reward.value, dict(state))
         self.graph.set_status(
             intent.intent_node_id, "done" if result.success else "failed"
         )
@@ -160,7 +166,32 @@ class Dispatcher:
             intent=intent, tool=tool.name, ran=not result.skipped,
             reason="skipped (binaire absent)" if result.skipped else "",
             reward=reward.value, facts=facts, findings=findings,
+            effective_delay_ms=effective_delay,
         )
+
+    def _resolve_tool(self, phase: str, decision: dict[str, Any]):
+        tool = self.registry.get(decision["tool"])
+        if tool is not None and phase in tool.phases:
+            return tool, decision["action_hash"]
+        phase_tools = self.registry.for_phase(phase)
+        if not phase_tools:
+            return None, decision["action_hash"]
+        tool = phase_tools[0]
+        ah = action_hash(tool.name, decision["timing"], decision["delay"],
+                         decision["frag"])
+        if ah not in enumerate_action_hashes(phase):
+            ah = decision["action_hash"]
+        return tool, ah
+
+    def _link_evidence(self, finding_node_id: str) -> str | None:
+        if self.evidence is None:
+            return None
+        items = self.evidence.all()
+        if not items:
+            return None
+        ev = items[-1]
+        self.evidence.link_finding(ev.id, finding_node_id)
+        return ev.id
 
     def _write_back(self, intent: Intent, tool_name: str, result) -> tuple[int, int, float]:
         facts = findings = 0
@@ -198,6 +229,9 @@ class Dispatcher:
                     agent="dispatcher",
                 )
                 self.graph.add_edge(fact.id, node.id, "proves")
+                ev_id = self._link_evidence(node.id)
+                if ev_id:
+                    node.content["evidence_id"] = ev_id
                 findings += 1
             gain = min(findings, 5) * 1.0 + 0.5
 
