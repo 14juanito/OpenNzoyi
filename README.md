@@ -137,8 +137,8 @@ Détails : [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 ## Démarrage rapide (Docker)
 
 ```bash
-git clone https://github.com/14juanito/Projet-Nzoyi.git
-cd Projet-Nzoyi
+git clone https://github.com/14juanito/OpenNzoyi.git
+cd OpenNzoyi
 cp .env.example .env            # ajuste POSTGRES_PASSWORD, etc.
 docker compose up -d            # db + core (RL) + api + web
 ```
@@ -223,7 +223,7 @@ Les couches LLM (stratégie, triage, raffinement, rationale) restent cantonnées
 ## Structure du projet
 
 ```
-Projet-Nzoyi/
+OpenNzoyi/
 ├── docker-compose.yml          # db + core + api + web
 ├── .env.example
 ├── nzoyi-core/                 # microservice RL (FastAPI, sans LLM)
