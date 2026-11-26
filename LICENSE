@@ -1,0 +1,50 @@
+OpenNzoyi — Licence d'usage restreint (recherche & tests autorisés)
+Copyright (c) 2026 Jean El-rohi Mukendi. Tous droits réservés.
+
+OpenNzoyi est un outil d'audit de sécurité offensif. Cette licence encadre
+strictement son utilisation. En obtenant, copiant, installant ou exécutant tout
+ou partie de ce logiciel, vous acceptez l'intégralité des conditions ci-dessous.
+
+1. OBJET ET USAGE AUTORISÉ
+   Une permission non exclusive, non transférable et révocable est accordée
+   pour utiliser, étudier et modifier ce logiciel UNIQUEMENT à des fins :
+     (a) de recherche académique ;
+     (b) de tests de pénétration et d'audits de sécurité AUTORISÉS, c'est-à-dire
+         réalisés sur des systèmes et réseaux dont vous êtes propriétaire, ou
+         pour lesquels vous détenez une autorisation ÉCRITE, EXPLICITE et
+         PRÉALABLE du propriétaire, et dans le respect des lois applicables.
+
+2. INTERDICTIONS
+   Il est strictement interdit d'utiliser ce logiciel :
+     (a) contre tout système, réseau, application ou donnée sans l'autorisation
+         écrite préalable de son propriétaire ;
+     (b) pour toute activité illégale, malveillante ou nuisible ;
+     (c) hors d'un environnement que vous contrôlez et êtes habilité à tester.
+   L'auteur n'autorise aucun usage offensif réel non consenti.
+
+3. REDISTRIBUTION
+   La redistribution du code source ou binaire est permise à condition de
+   conserver cet avis de licence et le copyright à l'identique, et de ne pas
+   retirer ni affaiblir les garde-fous (scope gate, interception gate, limites
+   de débit, journalisation). Toute redistribution reste soumise aux mêmes
+   restrictions d'usage.
+
+4. ABSENCE DE GARANTIE
+   LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE, EXPRESSE
+   OU IMPLICITE, Y COMPRIS SANS S'Y LIMITER LES GARANTIES DE QUALITÉ MARCHANDE,
+   D'ADÉQUATION À UN USAGE PARTICULIER ET DE NON-CONTREFAÇON.
+
+5. LIMITATION DE RESPONSABILITÉ
+   EN AUCUN CAS L'AUTEUR NE POURRA ÊTRE TENU RESPONSABLE D'UN QUELCONQUE
+   DOMMAGE, PERTE OU RÉCLAMATION RÉSULTANT DE L'UTILISATION, DE L'INCAPACITÉ
+   D'UTILISER, OU DU MÉSUSAGE DE CE LOGICIEL. L'UTILISATEUR ASSUME L'ENTIÈRE
+   RESPONSABILITÉ, CIVILE ET PÉNALE, DE SON USAGE. TOUT USAGE ILLÉGAL RELÈVE DE
+   LA SEULE RESPONSABILITÉ DE SON AUTEUR.
+
+6. RÉSILIATION
+   Cette licence est automatiquement résiliée en cas de violation de l'une de
+   ses conditions. À la résiliation, vous devez cesser tout usage et détruire
+   toutes les copies en votre possession.
+
+Pour toute autre utilisation (commerciale, ou hors du cadre ci-dessus),
+contactez l'auteur pour obtenir une autorisation écrite.

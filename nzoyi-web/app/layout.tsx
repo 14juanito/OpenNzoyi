@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "OpenZoyi — Audit autonome",
+  title: "OpenNzoyi — Audit autonome",
   description: "Système multi-agents d'audit de sécurité autonome",
 };
 

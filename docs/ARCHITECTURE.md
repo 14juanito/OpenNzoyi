@@ -140,7 +140,7 @@ jitter, backoff). `evidence/` : capture + addon mitmproxy (port 8788).
 
 ## Phase 5 — UI (nzoyi-web)
 
-Next.js 15 (App Router) + Tailwind, palette OpenZoyi (orange/noir/blanc).
+Next.js 15 (App Router) + Tailwind, palette OpenNzoyi (orange/noir/blanc).
 Dashboard, `/tasks/new`, `/tasks/[id]` (live SSE), `/tasks/[id]/findings`.
 Backend : endpoints `/api/*` + flux SSE `/api/tasks/{id}/stream`.
 

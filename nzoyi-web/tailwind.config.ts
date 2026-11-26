@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Palette OpenZoyi — extraite du logo (abeille orange sur fond clair).
+// Palette OpenNzoyi — extraite du logo (abeille orange sur fond clair).
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/openzoyi-wordmark.png" width="440" alt="Open'Zoyi — Multi-agent automated intrusion system">
+  <img src="assets/openzoyi-wordmark.png" width="440" alt="OpenNzoyi — Multi-agent automated intrusion system">
 </p>
 
 <p align="center">
@@ -23,9 +23,9 @@
 
 ---
 
-## Qu'est-ce qu'Open'Zoyi ?
+## Qu'est-ce qu'OpenNzoyi ?
 
-Open'Zoyi (*nzoyi* = « abeille » en lingala) est un **outil d'audit offensif
+OpenNzoyi (*nzoyi* = « abeille » en lingala) est un **outil d'audit offensif
 autonome**. Vous lui donnez une cible et un périmètre ; une équipe d'agents
 spécialisés enchaîne reconnaissance → analyse → exploitation → post-exploitation,
 **apprend à rester discrète** face à Suricata et aux règles SDN, et produit des
@@ -43,7 +43,7 @@ Ce qui le distingue d'un scanner classique :
 - 🧾 **Preuves liées aux findings** — proxy MITM qui capture requête + réponse.
 - 🎛️ **UI temps réel** — création de tâche, flux live (SSE), tableau de findings.
 
-> Open'Zoyi s'utilise **exclusivement** sur un lab **que vous contrôlez** et
+> OpenNzoyi s'utilise **exclusivement** sur un lab **que vous contrôlez** et
 > êtes **autorisé** à tester. Voir [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ---
@@ -51,8 +51,8 @@ Ce qui le distingue d'un scanner classique :
 ## Aperçu de l'interface
 
 <p align="center">
-  <img src="assets/ui/dashboard.png" width="90%" alt="Dashboard Open'Zoyi">
-  <br><sub>Dashboard — cartes de résumé, tâches récentes, état du système (charte OpenZoyi).</sub>
+  <img src="assets/ui/dashboard.png" width="90%" alt="Dashboard OpenNzoyi">
+  <br><sub>Dashboard — cartes de résumé, tâches récentes, état du système (charte OpenNzoyi).</sub>
 </p>
 
 <table>
@@ -75,7 +75,7 @@ Ce qui le distingue d'un scanner classique :
 ```
                          ┌───────────────────────────┐
                          │         nzoyi-web          │  UI Next.js 15
-                         │  dashboard · live · findings│  (palette OpenZoyi)
+                         │  dashboard · live · findings│  (palette OpenNzoyi)
                          └─────────────┬──────────────┘
                                        │ REST + SSE
                          ┌─────────────▼──────────────┐
@@ -211,7 +211,7 @@ Projet-Nzoyi/
 │   ├── graph/                  # exploration + assets
 │   ├── server.py               # API HTTP + SSE
 │   └── main.py                 # CLI
-├── nzoyi-web/                  # UI Next.js 15 (palette OpenZoyi)
+├── nzoyi-web/                  # UI Next.js 15 (palette OpenNzoyi)
 ├── db/migrations/              # Alembic (13 tables)
 ├── scripts/
 │   ├── verify.sh               # CI locale (tests + gate LLM + smoke RL)
@@ -244,10 +244,10 @@ cible Windows Server en projet. Guide complet :
 
 ## Avertissement légal
 
-Open'Zoyi est destiné **exclusivement** à la recherche et aux tests de
+OpenNzoyi est destiné **exclusivement** à la recherche et aux tests de
 pénétration **autorisés** sur un réseau **isolé que vous contrôlez**. Ne jamais
 l'utiliser contre des systèmes sans autorisation écrite explicite. L'auteur
-décline toute responsabilité en cas d'usage illégal.
+décline toute responsabilité en cas d'usage illégal. Voir [`LICENSE`](LICENSE).
 
 ## Auteur
 
@@ -256,5 +256,5 @@ Protestante au Congo (UPC).
 
 ## Licence
 
-Projet de recherche académique. Usage restreint aux tests autorisés sur un
-environnement contrôlé.
+Licence d'usage restreint — recherche académique et tests de pénétration
+**autorisés** uniquement. Voir [`LICENSE`](LICENSE).

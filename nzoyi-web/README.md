@@ -1,7 +1,7 @@
 # nzoyi-web
 
-Interface d'audit OpenZoyi — Next.js 15 (App Router) + TypeScript + Tailwind.
-Palette extraite du logo OpenZoyi (orange `#F59E0B`, noir `#1F2937`, blanc).
+Interface d'audit OpenNzoyi — Next.js 15 (App Router) + TypeScript + Tailwind.
+Palette extraite du logo OpenNzoyi (orange `#F59E0B`, noir `#1F2937`, blanc).
 
 ## Démarrage
 
