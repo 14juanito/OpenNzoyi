@@ -43,7 +43,15 @@ lab, et en parse la sortie. Sans le binaire, le wrapper retourne `skipped`.
 Chaque finding porte une preuve capturée (requête + réponse) via le proxy MITM
 (`evidence/mitm_proxy.py`, port 8788), liée au finding dans la table `evidence`.
 
-## Signalement
+## Signalement d'une vulnérabilité
 
-Vulnérabilité dans NZOYI lui-même : ouvrez une issue privée ou contactez le
-mainteneur. N'incluez jamais de données réelles de cible dans un rapport public.
+Pour une vulnérabilité **dans OpenNzoyi lui-même**, n'ouvre **jamais d'issue
+publique**. Utilise le **signalement privé** de GitHub :
+
+1. Onglet **Security** du dépôt → **Report a vulnerability** (GitHub Private
+   Vulnerability Reporting).
+2. Décris le problème, une reproduction minimale et l'impact. N'inclus **aucune
+   donnée réelle de cible**.
+
+Si le signalement privé n'est pas disponible, contacte le mainteneur en privé
+plutôt que d'ouvrir une issue publique.

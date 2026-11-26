@@ -1,67 +1,88 @@
-# Contribuer à OpenNzoyi
+# Contributing
 
-Merci de t'intéresser à **OpenNzoyi** 🐝 — un outil d'audit de sécurité
-**autonome** multi-agents, avec un moteur d'évasion des IDS par **apprentissage
-par renforcement** (RL), et une contrainte d'architecture stricte : **aucun LLM
-dans la boucle d'évasion**.
+OpenNzoyi 🐝 is an **autonomous** multi-agent security auditing tool with a
+reinforcement-learning IDS-evasion engine. Contributions are welcome — but one
+rule comes before everything else.
 
-Le projet est jeune et **cherche des contributeurs**. Que tu sois pentester,
-chercheur en ML/RL, dev backend/frontend ou admin de lab, il y a de quoi faire.
+## Ethical scope (non-negotiable)
 
-## ⚠️ Cadre éthique (non négociable)
+OpenNzoyi is for **authorized** penetration testing on an **isolated lab you
+control**, and nothing else. Every contribution must keep it that way: no
+embedded offensive payloads (tools are wrappers around standard binaries), never
+weaken the guardrails (scope gate, interception gate, rate limiting, logging),
+and no non-consenting real targets. See [LICENSE](LICENSE) and
+[docs/SECURITY.md](docs/SECURITY.md).
 
-OpenNzoyi est destiné **exclusivement** aux tests de pénétration **autorisés**
-sur un lab **isolé que tu contrôles**. Toute contribution doit respecter ce
-cadre (voir [`LICENSE`](LICENSE) et [`docs/SECURITY.md`](docs/SECURITY.md)) :
-- jamais de payload offensif embarqué (les outils sont des **wrappers** autour
-  de binaires standard) ;
-- ne jamais affaiblir les garde-fous (scope gate, interception gate, limites de
-  débit, journalisation) ;
-- pas de cible réelle non consentie, jamais.
+## First contribution
 
-## Où contribuer (par profil)
+- **Share feedback.** Check [open issues](https://github.com/14juanito/OpenNzoyi/issues)
+  for the same problem or proposal and add any new details there. For a new
+  idea, explain what you were trying to do and what would make it easier.
+- **Report a problem.** Include a short reproduction and the relevant
+  environment. For a UI issue, a sanitized screenshot and the browser version
+  can help. Remove credentials, private URLs, and sensitive task data before
+  posting.
+- **Report a security issue.** Do not open a public issue for a vulnerability;
+  follow [docs/SECURITY.md](docs/SECURITY.md) to report it privately.
+- **Send a small change.** A documentation correction, a tool-parser hardening,
+  or a focused UI improvement is a good place to start — look for
+  [`good first issue`](https://github.com/14juanito/OpenNzoyi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+  Check [open pull requests](https://github.com/14juanito/OpenNzoyi/pulls) for
+  overlapping work and refer to the relevant issue in your PR so readers can
+  find the discussion.
 
-| Profil | Pistes |
-|--------|--------|
-| **Pentester / Red team** | nouveaux wrappers d'outils, parsers robustes, playbooks de phase, validation en lab |
-| **ML / RL** | améliorer le Q-Learning (reward shaping, état/action), évaluer la convergence, comparer à d'autres détecteurs (UNSW-NB15) |
-| **Backend (Python/FastAPI)** | persistance PostgreSQL, concurrence, retests réels, moteur OOB/OAST |
-| **Frontend (Next.js/TS)** | vues manquantes (credentials, retests), graphes, UX |
-| **Détection / Blue team** | ingestion Suricata/Zeek/Sysmon, signatures, mesure d'évasion réelle |
-| **Lab / DevOps** | KVM/libvirt, cibles vulnérables, Docker, CI |
+## Pull requests
 
-Cherche les issues étiquetées `good first issue` et `help wanted`.
+- **Keep a few open PRs at a time.** Review is manual, one change at a time, so
+  a large batch makes the queue unmanageable and slows everyone down, including
+  you. If you have more changes queued, open one issue that lists them and wait
+  for the current ones to be reviewed.
+- **One focused change per PR.** If a change has independent parts, split it into
+  a small number of PRs and say in each description what the other parts depend
+  on.
+- **Describe the change.** State the problem, the behavior change and what you
+  tested. A pull request with no description is a request for changes.
+- **Keep the invariants green.** Every PR must satisfy:
+  - the original validation suite stays green — `pytest tests/test_validation.py`
+    (72 tests);
+  - **no LLM in the evasion loop** — `grep -rn "llm" nzoyi-core/evasion/` returns
+    nothing;
+  - any LLM-assisted layer has a **deterministic fallback** when the model is
+    absent or fails;
+  - `bash scripts/verify.sh` passes. For UI, `npm run build` passes.
+- **Provider support stays generic.** Any OpenAI- or Anthropic-compatible
+  endpoint works through `NZOYI_LLM_PROVIDER` and the panel config; provider
+  convenience goes in as a neutral preset (name and base URL) or a docs recipe,
+  with no vendor logos, promotional codes, baked vendor endpoints, or
+  vendor-specific environment variables. The RL evasion loop never takes an LLM,
+  by any provider.
 
-## Démarrer en local
+## Updating Docker image pins
+
+The Dockerfiles and the services in `docker-compose.yml` use readable tags
+(`postgres:16-alpine`, `python:3.13-slim`, `node:20-slim`). Review these pins
+regularly for upstream security updates. When refreshing a pin, prefer a tag
+followed by a digest; run `docker buildx imagetools inspect <image>:<tag>` and
+use the top-level index digest. Check that the index includes `linux/amd64` and
+`linux/arm64` before proposing the update. Record the old and new digests in the
+PR so reviewers can verify the change.
+
+## Issues
+
+- One problem per issue. Include the version or commit, what you ran and what you
+  expected.
+
+## Security
+
+- Do not open a public issue for a vulnerability in OpenNzoyi itself. Follow the
+  [private reporting instructions](docs/SECURITY.md).
+
+## Local setup
 
 ```bash
-git clone https://github.com/14juanito/Projet-Nzoyi.git
-cd Projet-Nzoyi
-
-# microservice RL + orchestrateur
+git clone https://github.com/14juanito/OpenNzoyi.git
+cd OpenNzoyi
 pip install -r nzoyi-core/requirements.txt -r nzoyi-api/requirements.txt
-bash scripts/verify.sh          # 72 tests d'origine + gate LLM + tests nzoyi-api
-
-# UI
+bash scripts/verify.sh            # 72 tests + LLM gate + nzoyi-api tests
 cd nzoyi-web && npm install && npm run dev
 ```
-
-## Standards de code
-
-- **Les 72 tests de validation d'origine doivent rester verts** à chaque PR
-  (non-régression) : `pytest tests/test_validation.py`.
-- **Gate LLM** : `grep -rn "llm" nzoyi-core/evasion/` doit renvoyer **0**. Aucun
-  LLM ne touche la boucle d'évasion, jamais.
-- **Repli déterministe** : toute couche LLM-isée doit retomber sur un
-  comportement déterministe si le modèle est absent/échoue.
-- Python : type hints, docstrings, pas de duplication. TS : `npm run build` doit
-  passer (typecheck).
-- Un PR = un sujet. Décris le *pourquoi*, pas seulement le *quoi*.
-
-## Processus
-
-1. Fork + branche (`feat/...`, `fix/...`).
-2. Code + tests. `bash scripts/verify.sh` au vert.
-3. PR claire, liée à une issue si possible.
-
-Questions / idées → ouvre une **Discussion** ou une **issue**. Bienvenue à bord 🐝
