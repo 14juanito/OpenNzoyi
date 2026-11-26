@@ -49,6 +49,7 @@ class Engine:
         profile: str = "balanced",
         task_id: str | None = None,
         max_rounds: int = 8,
+        on_event: Any = None,
     ) -> EngineResult:
         task_id = task_id or str(uuid.uuid4())
         scope = scope or {"cidrs": [], "domains": []}
@@ -68,6 +69,11 @@ class Engine:
             profile=profile, root_target=host_of(target),
         )
 
+        def emit(kind: str, data: dict[str, Any]) -> None:
+            if on_event is not None:
+                on_event({"type": kind, **data})
+
+        emit("task_started", {"task_id": task_id, "target": host_of(target)})
         outcomes: list[DispatchOutcome] = []
         seen_intents: set[str] = set()
         for _ in range(max_rounds):
@@ -76,8 +82,18 @@ class Engine:
                 break
             for intent in intents:
                 seen_intents.add(intent.intent_node_id)
-                outcomes.append(await dispatcher.dispatch(intent))
+                emit("intent", {"phase": intent.phase, "target": intent.target})
+                outcome = await dispatcher.dispatch(intent)
+                outcomes.append(outcome)
+                emit("tool_call", {
+                    "phase": intent.phase, "target": intent.target,
+                    "tool": outcome.tool, "ran": outcome.ran,
+                    "reason": outcome.reason, "reward": round(outcome.reward, 3),
+                    "findings": outcome.findings,
+                })
 
+        rep = build_report(task, graph, assets)
+        emit("task_done", {"task_id": task_id, "summary": rep["summary"]})
         return EngineResult(task=task, graph=graph, assets=assets, outcomes=outcomes)
 
     @staticmethod
