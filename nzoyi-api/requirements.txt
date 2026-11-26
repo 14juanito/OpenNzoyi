@@ -1,0 +1,7 @@
+# nzoyi-api — orchestrateur, agents, outils, gates.
+fastapi>=0.110
+pydantic>=2.6
+httpx>=0.27
+# Outils offensifs (binaires système, installés hors pip): nmap, nuclei,
+# netexec, … — voir docs/LAB_SETUP.md. Les wrappers dégradent proprement
+# (résultat "skipped") quand un binaire est absent.
