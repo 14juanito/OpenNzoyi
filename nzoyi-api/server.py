@@ -28,6 +28,7 @@ from knowledge.tool_signatures import prior_detection
 from agents.killchain import reconstruct as reconstruct_killchain
 from gates.rules_store import GLOBAL_RULES
 from security.secrets import GLOBAL_SECRETS, SecretError
+from store.repository import get_repository
 
 _SEV = ["critical", "high", "medium", "low", "info"]
 
@@ -44,6 +45,12 @@ class TaskManager:
         self.events: dict[str, list[dict]] = {}
         self.subscribers: dict[str, list[asyncio.Queue]] = {}
         self.results: dict[str, EngineResult] = {}
+        self.repo = get_repository()
+        # Restore persisted tasks so they survive a restart (Niveau 4).
+        for t in self.repo.list_tasks():
+            self.tasks[t["id"]] = t
+            self.events.setdefault(t["id"], [])
+            self.subscribers.setdefault(t["id"], [])
 
     def create(self, payload: "TaskCreate") -> dict[str, Any]:
         tid = str(uuid.uuid4())
@@ -61,6 +68,7 @@ class TaskManager:
         self.tasks[tid] = task
         self.events[tid] = []
         self.subscribers[tid] = []
+        self.repo.save_task(task)
         return task
 
     def _emit(self, tid: str, event: dict) -> None:
@@ -72,6 +80,7 @@ class TaskManager:
     async def run(self, tid: str) -> None:
         task = self.tasks[tid]
         task["status"] = "running"
+        self.repo.set_task_status(tid, "running")
         self._emit(tid, {"type": "status", "status": "running"})
         engine = Engine()
         try:
@@ -82,10 +91,14 @@ class TaskManager:
             )
             self.results[tid] = result
             task["status"] = "done"
+            report = result.report()
+            self.repo.set_task_status(tid, "done")
+            self.repo.save_findings(tid, report["findings"])
             self._emit(tid, {"type": "status", "status": "done",
-                             "summary": result.report()["summary"]})
+                             "summary": report["summary"]})
         except Exception as exc:  # noqa: BLE001
             task["status"] = "failed"
+            self.repo.set_task_status(tid, "failed")
             self._emit(tid, {"type": "status", "status": "failed", "error": str(exc)})
         finally:
             for q in list(self.subscribers.get(tid, [])):
@@ -114,7 +127,10 @@ def health() -> dict[str, Any]:
 
 def _task_findings(tid: str) -> list[dict[str, Any]]:
     result = MANAGER.results.get(tid)
-    return result.report()["findings"] if result else []
+    if result:
+        return result.report()["findings"]
+    # No live run in memory → read persisted findings (survives restart).
+    return MANAGER.repo.list_task_findings(tid)
 
 
 def _sev_counts(findings: list[dict[str, Any]]) -> dict[str, int]:
@@ -147,9 +163,9 @@ def list_tasks() -> list[dict[str, Any]]:
 @app.get("/api/findings")
 def all_findings(dedup: bool = False) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
-    for tid, result in MANAGER.results.items():
+    for tid in MANAGER.tasks:
         tname = MANAGER.tasks.get(tid, {}).get("name", tid)
-        for f in result.report()["findings"]:
+        for f in _task_findings(tid):
             items.append({**f, "task_id": tid, "task_name": tname})
     order = {s: i for i, s in enumerate(_SEV)}
     items.sort(key=lambda f: order.get(f["severity"], 99))
